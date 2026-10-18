@@ -189,8 +189,7 @@ def publish(post):
         return False
 
     caption = (
-        f"Valorant • Rule34 #{post_id}\n"
-        f"{POST_URL.format(post_id)}"
+        R34 Valorant (https://t.me/valorantnsfv)
     )
 
     send_photo(
