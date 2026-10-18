@@ -110,8 +110,7 @@ def get_posts():
     results = []
 
     blocked_tags = {
-        "loli", "shota", "underage", "child",
-        "young_girl", "young_boy"
+        
     }
 
     for post in data:
