@@ -34,6 +34,8 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+          RULE34_API_KEY: ${{ secrets.RULE34_API_KEY }}
+          RULE34_USER_ID: ${{ secrets.RULE34_USER_ID }}
         run: python bot.py
 
       - name: Save state
