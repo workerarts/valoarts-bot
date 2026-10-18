@@ -7,11 +7,13 @@ from urllib.parse import urlparse
 
 import requests
 
-API_URL = "https://rule34.xxx/index.php"
+API_URL = "https://api.rule34.xxx/index.php"
 POST_URL = "https://rule34.xxx/index.php?page=post&s=view&id={}"
 
 BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 CHANNEL_ID = os.environ["TELEGRAM_CHANNEL_ID"]
+RULE34_API_KEY = os.environ["RULE34_API_KEY"]
+RULE34_USER_ID = os.environ["RULE34_USER_ID"]
 
 STATE_FILE = Path("state.json")
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
@@ -59,6 +61,8 @@ def get_posts():
             "limit": "1000",
             "pid": "0",
             "tags": TAGS,
+            "api_key": RULE34_API_KEY,
+            "user_id": RULE34_USER_ID,
         },
         timeout=40,
     )
