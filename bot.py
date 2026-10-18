@@ -189,7 +189,7 @@ def publish(post):
         return False
 
     caption = (
-        caption = f"R34 Valorant (https://t.me/valorantnsfv)"
+        caption = '<a href="https://t.me/valorantnsfv">R34 Valorant</a>'
     )
 
     send_photo(
