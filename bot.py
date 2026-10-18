@@ -50,6 +50,7 @@ def save_state(state):
     temporary.replace(STATE_FILE)
 
 
+
 def get_posts():
     response = SESSION.get(
         API_URL,
@@ -66,17 +67,52 @@ def get_posts():
         },
         timeout=40,
     )
+
     response.raise_for_status()
 
-    data = response.json()
+    try:
+        data = response.json()
+    except ValueError:
+        raise RuntimeError(
+            "Rule34 API вернул не JSON. "
+            f"Content-Type: {response.headers.get('Content-Type')}; "
+            f"ответ начинается с: {response.text[:200]!r}"
+        )
 
     if isinstance(data, dict):
-        data = data.get("post", data.get("posts", []))
+        if data.get("success") is False:
+            raise RuntimeError(
+                "Ошибка API Rule34: "
+                + str(data.get("message", data.get("error", "без описания")))
+            )
+
+        data = data.get("post", data.get("posts", data.get("data", [])))
+
+    if isinstance(data, dict):
+        # Некоторые ответы могут содержать один объект публикации.
+        if "id" in data:
+            data = [data]
+        else:
+            raise RuntimeError(
+                "Неизвестная структура JSON от Rule34. "
+                f"Поля ответа: {list(data.keys())}"
+            )
+
+    if data is None:
+        data = []
 
     if not isinstance(data, list):
-        raise RuntimeError("Unexpected Rule34 API response")
+        raise RuntimeError(
+            "Неожиданный тип ответа Rule34: "
+            f"{type(data).__name__}; значение: {str(data)[:200]}"
+        )
 
     results = []
+
+    blocked_tags = {
+        "loli", "shota", "underage", "child",
+        "young_girl", "young_boy"
+    }
 
     for post in data:
         if not isinstance(post, dict):
@@ -85,18 +121,11 @@ def get_posts():
         rating = str(post.get("rating", "")).lower()
         tags = set(str(post.get("tags", "")).lower().split())
 
-        # Проверяем рейтинг и основной тег повторно.
         if rating not in ("e", "explicit"):
             continue
 
         if "valorant" not in tags:
             continue
-
-        # Дополнительная проверка тегов.
-        blocked_tags = {
-            "loli", "shota", "underage", "child",
-            "young_girl", "young_boy"
-        }
 
         if tags.intersection(blocked_tags):
             continue
@@ -106,9 +135,8 @@ def get_posts():
 
         results.append(post)
 
-    # ID постов обычно позволяет упорядочить публикации
-    # от старых к новым.
     return sorted(results, key=lambda p: int(p["id"]))
+
 
 
 def send_photo(image_data, filename, caption):
