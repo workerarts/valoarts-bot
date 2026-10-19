@@ -2034,10 +2034,17 @@
     "19091563",
     "19093542",
     "19094256",
-    "19094372"
+    "19094372",
+    "19094542",
+    "19094545",
+    "19094547",
+    "19094553",
+    "19094556",
+    "19094559",
+    "19094589"
   ],
-  "last_post_id": 19094372,
-  "last_publication_at": "2026-10-19T17:01:51.032911+00:00",
+  "last_post_id": 19094589,
+  "last_publication_at": "2026-10-19T17:34:37.720754+00:00",
   "last_notified_error": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
   "auto_paused": false,
   "bot_enabled": true,
@@ -22518,9 +22525,79 @@
       "agents": [
         "hush"
       ]
+    },
+    {
+      "id": "19094542",
+      "at": "2026-10-19T17:34:10.861487+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "19094545",
+      "at": "2026-10-19T17:34:12.854840+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "19094547",
+      "at": "2026-10-19T17:34:17.918055+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "19094553",
+      "at": "2026-10-19T17:34:19.956578+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "19094556",
+      "at": "2026-10-19T17:34:25.064022+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "19094559",
+      "at": "2026-10-19T17:34:27.136543+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "19094589",
+      "at": "2026-10-19T17:34:37.720754+00:00",
+      "source": "auto",
+      "type": "video",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
     }
   ],
-  "last_published_id": "19094372",
+  "last_published_id": "19094589",
   "last_update_id": 506713660,
   "post_delay": 1,
   "publication_errors": [
