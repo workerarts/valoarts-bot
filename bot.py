@@ -774,8 +774,15 @@ def process_test_commands(state):
             "/statistics",
             "/clearstats",
         )
-        custom_add = re.fullmatch(r"/add([a-z][a-z_]*?)([1-9][0-9]*)", command_text, re.I)
-        custom_id = re.fullmatch(r"/add([0-9]+)", command_text, re.I)
+        # Built-in commands take priority over the dynamic /add<agent><count>
+        # and /add<post_id> syntax. In particular, /addv1 is NOT agent "v".
+        is_builtin = command_text in supported_commands
+        custom_add = None if is_builtin else re.fullmatch(
+            r"/add([a-z][a-z_]*?)([1-9][0-9]*)", command_text, re.I
+        )
+        custom_id = None if is_builtin else re.fullmatch(
+            r"/add([0-9]+)", command_text, re.I
+        )
         if command_text not in supported_commands and not custom_add and not custom_id:
             continue
 
