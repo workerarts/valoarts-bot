@@ -251,6 +251,32 @@ def send_media(method, field_name, file_data, filename, caption):
         )
 
 
+# Telegram rejects these files permanently; retrying the same file blocks the queue.
+# Network failures, rate limits and Telegram 5xx errors must remain retryable.
+PERMANENT_TELEGRAM_MEDIA_ERRORS = (
+    "PHOTO_INVALID_DIMENSIONS",
+    "PHOTO_INVALID",
+    "IMAGE_PROCESS_FAILED",
+    "PHOTO_EXT_INVALID",
+    "VIDEO_CONTENT_TYPE_INVALID",
+    "VIDEO_FILE_INVALID",
+    "ANIMATION_INVALID",
+    "STICKER_INVALID",
+    "FILE_PARTS_INVALID",
+    "FILE_TOO_BIG",
+    "PHOTO_SAVE_FILE_INVALID",
+)
+
+
+def is_permanent_media_error(error):
+    message = str(error).upper()
+    return (
+        isinstance(error, RuntimeError)
+        and "TELEGRAM ERROR 400" in message
+        and any(code in message for code in PERMANENT_TELEGRAM_MEDIA_ERRORS)
+    )
+
+
 def _format_name(value):
     """Turn a Rule34 tag/name into a readable name."""
     value = str(value or "").strip().replace("_", " ")
@@ -1452,8 +1478,20 @@ def main():
         try:
             published = publish(post, state)
         except Exception as error:
-            # Останавливаемся на ошибке, чтобы не перепрыгнуть через этот ID.
-            # Следующий запуск повторит попытку с него.
+            if is_permanent_media_error(error):
+                # Permanent bad media: do not block the entire publication queue.
+                # Save a separate skip record, not a fake successful publication.
+                skipped = state.setdefault("skipped_invalid_ids", [])
+                if post_id not in skipped:
+                    skipped.append(post_id)
+                state["last_post_id"] = int(post_id)
+                state["initialized"] = True
+                save_state(state)
+                print(f"SKIP permanently invalid Telegram media: {post_id}: {error}")
+                notify_admin_error(state, f"Автопубликация поста ID {post_id}", error)
+                # Move directly to the next art. No sleep on invalid media.
+                continue
+            # Transient failures (timeouts, rate limits, 5xx) are retried next run.
             notify_admin_error(state, f"Автопубликация поста ID {post_id}", error)
             break
 
