@@ -1,3 +1,4 @@
+
 import json
 import os
 import time
@@ -7,24 +8,20 @@ from urllib.parse import urlparse
 import requests
 
 API_URL = "https://api.rule34.xxx/index.php"
-POST_URL = "https://rule34.xxx/index.php?page=post&s=view&id={}"
 
 BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 CHANNEL_ID = os.environ["TELEGRAM_CHANNEL_ID"]
 RULE34_API_KEY = os.environ["RULE34_API_KEY"]
 RULE34_USER_ID = os.environ["RULE34_USER_ID"]
+ADMIN_ID = os.environ.get("TELEGRAM_ADMIN_ID", "").strip()
 
 STATE_FILE = Path("state.json")
 MAX_FILE_BYTES = 50 * 1024 * 1024
 
-TAGS = (
-    "valorant rating:explicit "
-)
+TAGS = "valorant rating:explicit"
 
 SESSION = requests.Session()
-SESSION.headers.update({
-    "User-Agent": "ValoArtsBot/1.0"
-})
+SESSION.headers.update({"User-Agent": "ValoArtsBot/1.0"})
 
 
 def load_state():
@@ -65,16 +62,14 @@ def get_posts():
         },
         timeout=40,
     )
-
     response.raise_for_status()
 
     try:
         data = response.json()
     except ValueError:
         raise RuntimeError(
-            "Rule34 API вернул не JSON. "
-            f"Content-Type: {response.headers.get('Content-Type')}; "
-            f"ответ начинается с: {response.text[:200]!r}"
+            "Rule34 API вернул не JSON: "
+            f"{response.text[:200]!r}"
         )
 
     if isinstance(data, dict):
@@ -91,8 +86,7 @@ def get_posts():
             data = [data]
         else:
             raise RuntimeError(
-                "Неизвестная структура JSON от Rule34. "
-                f"Поля ответа: {list(data.keys())}"
+                f"Неизвестная структура JSON: {list(data.keys())}"
             )
 
     if data is None:
@@ -100,14 +94,10 @@ def get_posts():
 
     if not isinstance(data, list):
         raise RuntimeError(
-            "Неожиданный тип ответа Rule34: "
-            f"{type(data).__name__}; значение: {str(data)[:200]}"
+            f"Неожиданный тип ответа Rule34: {type(data).__name__}"
         )
 
     results = []
-
-    blocked_tags = {
-    }
 
     for post in data:
         if not isinstance(post, dict):
@@ -122,16 +112,12 @@ def get_posts():
         if "valorant" not in tags:
             continue
 
-        if tags.intersection(blocked_tags):
-            continue
-
         if not post.get("id") or not post.get("file_url"):
             continue
 
         results.append(post)
 
     return sorted(results, key=lambda p: int(p["id"]))
-
 
 
 def send_media(method, field_name, file_data, filename, caption):
@@ -173,17 +159,13 @@ def publish(post):
     response = SESSION.get(media_url, timeout=60)
     response.raise_for_status()
 
-    content_type = response.headers.get(
-        "Content-Type", ""
-    ).lower()
-
+    content_type = response.headers.get("Content-Type", "").lower()
     file_data = response.content
 
     if len(file_data) > MAX_FILE_BYTES:
         print(f"SKIP oversized file: {post_id}")
         return False
 
-    # Определяем тип файла по расширению и Content-Type.
     if extension in (".jpg", ".jpeg", ".png"):
         if not content_type.startswith("image/"):
             print(f"SKIP invalid image: {post_id}")
@@ -193,29 +175,22 @@ def publish(post):
         field_name = "photo"
 
     elif extension == ".gif" or content_type == "image/gif":
-        method = "sendAnimation"
-        field_name = "animation"
-
-        if not (
-            extension == ".gif"
-            or file_data[:6] in (b"GIF87a", b"GIF89a")
-        ):
+        if file_data[:6] not in (b"GIF87a", b"GIF89a"):
             print(f"SKIP invalid GIF: {post_id}")
             return False
 
+        method = "sendAnimation"
+        field_name = "animation"
         extension = ".gif"
 
-    elif extension == ".mp4" or content_type == "video/mp4":
+    elif extension == ".mp4" or content_type.startswith("video/mp4"):
+        if extension != ".mp4" and file_data[4:8] != b"ftyp":
+            print(f"SKIP invalid MP4: {post_id}")
+            return False
+
         method = "sendVideo"
         field_name = "video"
         extension = ".mp4"
-
-        if not (
-            extension == ".mp4"
-            or file_data[4:8] == b"ftyp"
-        ):
-            print(f"SKIP invalid MP4: {post_id}")
-            return False
 
     else:
         print(
@@ -238,8 +213,132 @@ def publish(post):
     return True
 
 
+def send_message(chat_id, message_text):
+    response = SESSION.post(
+        f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+        data={
+            "chat_id": chat_id,
+            "text": message_text,
+        },
+        timeout=30,
+    )
+    response.raise_for_status()
+
+    result = response.json()
+    if not result.get("ok"):
+        raise RuntimeError(f"Telegram API error: {result}")
+
+
+def process_test_commands(state):
+    if not ADMIN_ID:
+        print("Test commands disabled: TELEGRAM_ADMIN_ID is missing")
+        return
+
+    offset = int(state.get("last_update_id", 0)) + 1
+
+    try:
+        response = SESSION.get(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates",
+            params={
+                "offset": offset,
+                "timeout": 0,
+                "allowed_updates": json.dumps(["message"]),
+            },
+            timeout=30,
+        )
+        response.raise_for_status()
+
+        result = response.json()
+        if not result.get("ok"):
+            raise RuntimeError(f"Telegram getUpdates error: {result}")
+
+    except Exception as error:
+        print(f"Could not check Telegram commands: {error}")
+        print(
+            "If a webhook is configured for this bot, "
+            "getUpdates cannot be used until the webhook is removed."
+        )
+        return
+
+    for update in result.get("result", []):
+        state["last_update_id"] = update["update_id"]
+
+        message = update.get("message", {})
+        command_text = message.get("text", "").strip()
+        chat = message.get("chat", {})
+        sender = message.get("from", {})
+
+        # Игнорируем сообщения от всех, кроме администратора.
+        if str(sender.get("id", "")) != ADMIN_ID:
+            continue
+
+        if command_text not in ("/testgif", "/testvideo"):
+            continue
+
+        chat_id = chat.get("id")
+
+        if chat.get("type") != "private":
+            print("Test command ignored: use a private chat with the bot")
+            continue
+
+        extension = ".gif" if command_text == "/testgif" else ".mp4"
+        label = "GIF" if extension == ".gif" else "видео"
+
+        try:
+            posts = get_posts()
+
+            candidates = [
+                post
+                for post in reversed(posts)
+                if Path(urlparse(post["file_url"]).path).suffix.lower()
+                == extension
+            ]
+
+            if not candidates:
+                send_message(
+                    chat_id,
+                    f"Не нашёл файл {label} среди доступных результатов API."
+                )
+                continue
+
+            # Берём самый новый результат с нужным расширением.
+            test_post = candidates[0]
+            published = publish(test_post)
+
+            if published:
+                send_message(
+                    chat_id,
+                    f"Тест успешен: {label} опубликовано в канале."
+                )
+            else:
+                send_message(
+                    chat_id,
+                    f"Не удалось опубликовать выбранный файл ({label})."
+                )
+
+        except Exception as error:
+            print(f"Test command failed: {error}")
+
+            try:
+                send_message(
+                    chat_id,
+                    f"Тест не пройден: {str(error)[:300]}"
+                )
+            except Exception as message_error:
+                print(f"Could not send test result: {message_error}")
+
+        finally:
+            save_state(state)
+
+    save_state(state)
+
+
 def main():
     state = load_state()
+
+    # Сначала проверяем команды администратора.
+    process_test_commands(state)
+
     sent_ids = set(
         str(item) for item in state.get("sent_ids", [])
     )
@@ -247,8 +346,6 @@ def main():
     posts = get_posts()
 
     if not state.get("initialized", False):
-        # Первый запуск: последние 100 результатов
-        # из доступной выборки API.
         posts = posts[-100:]
         print(f"Initial batch: {len(posts)} posts")
     else:
@@ -271,8 +368,8 @@ def main():
             time.sleep(1)
             continue
 
-        # Сохраняем ID, чтобы не обрабатывать
-        # публикацию повторно при следующем запуске.
+        # Сохраняем ID, даже если формат не поддерживается,
+        # чтобы не проверять один и тот же пост снова.
         sent_ids.add(post_id)
         state["sent_ids"] = sorted(
             sent_ids, key=lambda value: int(value)
@@ -289,10 +386,6 @@ def main():
     save_state(state)
 
     print("Run completed successfully.")
-
-
-if __name__ == "__main__":
-    main()
 
 
 if __name__ == "__main__":
