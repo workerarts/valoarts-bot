@@ -1,13 +1,11 @@
+
 {
   "initialized": true,
   "sent_ids": [
-    "16384015",
-    "16398631",
-    "16398635",
-    "16398637"
+    "16384015"
   ],
-  "last_post_id": 16398637,
-  "last_publication_at": "2026-10-19T11:20:15.517842+00:00",
+  "last_post_id": 16384015,
+  "last_publication_at": null,
   "last_notified_error": null,
   "auto_paused": false,
   "bot_enabled": true,
@@ -15,39 +13,8 @@
   "restart_requested": false,
   "command_activity": 6,
   "idle_sleep_notified": false,
-  "publication_stats": [
-    {
-      "id": "16398631",
-      "at": "2026-10-19T11:19:58.035489+00:00",
-      "source": "auto",
-      "type": "image",
-      "art": "ai_generated",
-      "agents": [
-        "killjoy"
-      ]
-    },
-    {
-      "id": "16398635",
-      "at": "2026-10-19T11:20:05.374888+00:00",
-      "source": "auto",
-      "type": "image",
-      "art": "ai_generated",
-      "agents": [
-        "killjoy"
-      ]
-    },
-    {
-      "id": "16398637",
-      "at": "2026-10-19T11:20:15.517842+00:00",
-      "source": "auto",
-      "type": "image",
-      "art": "ai_generated",
-      "agents": [
-        "killjoy"
-      ]
-    }
-  ],
-  "last_published_id": "16398637",
+  "publication_stats": [],
+  "last_published_id": "16384015",
   "last_update_id": 506713639,
   "post_delay": 3
 }
