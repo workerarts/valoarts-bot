@@ -64,15 +64,25 @@ jobs:
               capture_output=True, check=False,
           )
           remote = json.loads(remote_bytes.stdout) if remote_bytes.returncode == 0 else {}
-          merged = dict(remote)
-          merged.update(local)
-          ids = {str(x) for x in remote.get("sent_ids", [])}
-          ids.update(str(x) for x in local.get("sent_ids", []))
-          merged["sent_ids"] = sorted(ids, key=lambda x: int(x))
-          # Never move the automatic publishing cursor backwards during a race.
-          cursors = [v for v in (remote.get("last_post_id"), local.get("last_post_id")) if v is not None]
-          if cursors:
-              merged["last_post_id"] = max(int(v) for v in cursors)
+          local_epoch = int(local.get("history_reset_epoch", 0))
+          remote_epoch = int(remote.get("history_reset_epoch", 0))
+          if local_epoch > remote_epoch:
+              # A reset was requested during this run: use the reset history.
+              merged = dict(remote)
+              merged.update(local)
+          elif remote_epoch > local_epoch:
+              # A stale workflow must not restore IDs cleared by a newer reset.
+              merged = dict(local)
+              merged.update(remote)
+          else:
+              merged = dict(remote)
+              merged.update(local)
+              ids = {str(x) for x in remote.get("sent_ids", [])}
+              ids.update(str(x) for x in local.get("sent_ids", []))
+              merged["sent_ids"] = sorted(ids, key=lambda x: int(x))
+              cursors = [v for v in (remote.get("last_post_id"), local.get("last_post_id")) if v is not None]
+              if cursors:
+                  merged["last_post_id"] = max(int(v) for v in cursors)
           Path("state.json").write_text(json.dumps(merged, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           PYMERGE
             git add state.json
