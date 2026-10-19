@@ -188,9 +188,7 @@ def publish(post):
         print(f"SKIP oversized file: {post_id}")
         return False
 
-    caption = (
-        caption = '<a href="https://t.me/valorantnsfv">R34 Valorant</a>'
-    )
+    caption = '<a href="https://t.me/valorantnsfv">R34 Valorant</a>'
 
     send_photo(
         image_data,
