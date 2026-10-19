@@ -200,28 +200,7 @@ def _format_name(value):
     return " ".join(part[:1].upper() + part[1:] for part in value.split())
 
 
-def _get_characters(raw_tags):
-    """Find every character tag ending in _(valorant), including new agents."""
-    characters = []
-    seen = set()
-    suffix = "_(valorant)"
-
-    for tag in raw_tags:
-        lowered = tag.lower()
-        if lowered.endswith(suffix):
-            name = tag[:-len(suffix)].strip("_ ")
-            key = name.casefold()
-            if name and key not in seen:
-                characters.append(_format_name(name))
-                seen.add(key)
-        elif lowered in {"hush", "hush_valorant"}:
-            # Hush is the newly revealed VALORANT agent; some sources may
-            # provide the plain tag before the canonical _(valorant) tag exists.
-            if "hush" not in seen:
-                characters.append("Hush")
-                seen.add("hush")
-
-    return characters
+_get_characters(raw_tags)
 
 
 def _get_artist(post, raw_tags, normalized_tags):
