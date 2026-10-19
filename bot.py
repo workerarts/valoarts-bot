@@ -45,30 +45,59 @@ def save_state(state):
 
 
 def get_posts():
-    response = SESSION.get(
-        API_URL,
-        params={
-            "page": "dapi",
-            "s": "post",
-            "q": "index",
-            "json": "1",
-            # Получаем последние подходящие публикации по убыванию ID.
-            "limit": "1000",
-            "pid": "0",
-            "tags": TAGS,
-            "api_key": RULE34_API_KEY,
-            "user_id": RULE34_USER_ID,
-        },
-        timeout=40,
-    )
-    response.raise_for_status()
+    # Rule34 иногда возвращает пустой ответ даже при HTTP 200.
+    # Повторяем запрос несколько раз, прежде чем считать запуск неудачным.
+    last_error = None
 
-    try:
-        data = response.json()
-    except ValueError:
+    for attempt in range(1, 5):
+        try:
+            response = SESSION.get(
+                API_URL,
+                params={
+                    "page": "dapi",
+                    "s": "post",
+                    "q": "index",
+                    "json": "1",
+                    "limit": "1000",
+                    "pid": "0",
+                    "tags": TAGS,
+                    "api_key": RULE34_API_KEY,
+                    "user_id": RULE34_USER_ID,
+                },
+                timeout=40,
+            )
+            response.raise_for_status()
+
+            if not response.text.strip():
+                raise RuntimeError(
+                    f"Rule34 API вернул пустой ответ "
+                    f"(HTTP {response.status_code})"
+                )
+
+            try:
+                data = response.json()
+            except ValueError as error:
+                raise RuntimeError(
+                    "Rule34 API вернул не JSON. "
+                    f"HTTP: {response.status_code}; "
+                    f"Content-Type: {response.headers.get('Content-Type')}; "
+                    f"ответ: {response.text[:200]!r}"
+                ) from error
+
+            break
+
+        except (requests.RequestException, RuntimeError) as error:
+            last_error = error
+            print(
+                f"Rule34 API attempt {attempt}/4 failed: {error}"
+            )
+
+            if attempt < 4:
+                time.sleep(attempt * 3)
+    else:
         raise RuntimeError(
-            "Rule34 API вернул не JSON: "
-            f"{response.text[:200]!r}"
+            f"Не удалось получить данные Rule34 API после 4 попыток: "
+            f"{last_error}"
         )
 
     if isinstance(data, dict):
@@ -116,7 +145,6 @@ def get_posts():
 
         results.append(post)
 
-    # Независимо от порядка ответа API обрабатываем публикации от старых к новым.
     return sorted(results, key=lambda post: int(post["id"]))
 
 
