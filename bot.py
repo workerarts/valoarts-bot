@@ -214,6 +214,12 @@ def _get_characters(raw_tags):
             if name and key not in seen:
                 characters.append(_format_name(name))
                 seen.add(key)
+        elif lowered in {"hush", "hush_valorant"}:
+            # Hush is the newly revealed VALORANT agent; some sources may
+            # provide the plain tag before the canonical _(valorant) tag exists.
+            if "hush" not in seen:
+                characters.append("Hush")
+                seen.add("hush")
 
     return characters
 
@@ -280,11 +286,12 @@ def build_caption(post):
             seen.add("ai_generated")
     else:
         artist = _get_artist(post, raw_tags, normalized_tags)
-        if artist:
-            artist_tag = _hashtag(artist)
-            if artist_tag and artist_tag not in seen:
-                hashtags.append("#" + artist_tag)
-                seen.add(artist_tag)
+        # For non-AI original artwork, use a consistent #original tag instead
+        # of exposing the artist's name in the caption.
+        if artist or "original" in normalized_tags:
+            if "original" not in seen:
+                hashtags.append("#original")
+                seen.add("original")
 
     # Add a media hashtag only for animated formats; ordinary photos get none.
     file_url = str(post.get("file_url", "") or "")
