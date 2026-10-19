@@ -665,7 +665,7 @@ def main():
         state["initialized"] = True
         save_state(state)
 
-        time.sleep(1)
+        time.sleep(5)
 
     print(
         f"Run completed. Last processed post ID: "
