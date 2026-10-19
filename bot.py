@@ -273,6 +273,91 @@ def send_message(chat_id, message_text):
         raise RuntimeError(f"Telegram API error: {result}")
 
 
+def poll_delay_commands(state):
+    """Check for delay commands during long publishing batches."""
+    if not ADMIN_ID:
+        return
+
+    offset = int(state.get("last_update_id", 0)) + 1
+    try:
+        response = SESSION.get(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates",
+            params={
+                "offset": offset,
+                "timeout": 0,
+                "allowed_updates": json.dumps(["message"]),
+            },
+            timeout=10,
+        )
+        response.raise_for_status()
+        result = response.json()
+        if not result.get("ok"):
+            raise RuntimeError(f"Telegram getUpdates error: {result}")
+    except Exception as error:
+        print(f"Could not poll delay commands during publishing: {error}")
+        return
+
+    delay_commands = {"/setdelay1": 1, "/setdelay3": 3, "/setdelay5": 5}
+    pending = state.setdefault("pending_updates", [])
+
+    updates = result.get("result", [])
+
+    for update in updates:
+        state["last_update_id"] = max(
+            int(state.get("last_update_id", 0)), int(update["update_id"])
+        )
+        message = update.get("message", {})
+        text = (message.get("text") or "").strip()
+        parts = text.split()
+        command = parts[0].split("@", 1)[0] if parts else ""
+        chat = message.get("chat", {})
+        sender = message.get("from", {})
+        chat_id = chat.get("id")
+
+        is_admin_private = (
+            str(sender.get("id", "")) == ADMIN_ID
+            and chat.get("type") == "private"
+        )
+
+        if is_admin_private and command in delay_commands and len(parts) == 1:
+            state["post_delay"] = delay_commands[command]
+            save_state(state)
+            try:
+                send_message(
+                    chat_id,
+                    f"✅ Интервал изменён! Теперь между публикациями {state['post_delay']} сек. Настройка сохранена."
+                )
+            except Exception as error:
+                print(f"Could not send delay confirmation: {error}")
+        elif is_admin_private and command == "/setdelay" and len(parts) == 1:
+            current_delay = int(state.get("post_delay", 5))
+            try:
+                send_message(
+                    chat_id,
+                    f"Текущий интервал между публикациями: {current_delay} сек."
+                )
+            except Exception as error:
+                print(f"Could not send current delay: {error}")
+        else:
+            # Preserve other commands so they can be handled normally later.
+            pending.append(update)
+
+    pending.sort(key=lambda item: item.get("update_id", 0))
+    save_state(state)
+
+
+def sleep_with_command_polling(state, seconds):
+    """Wait between posts, checking delay commands once per second."""
+    elapsed = 0
+    while elapsed < max(1, int(state.get("post_delay", seconds))):
+        poll_delay_commands(state)
+        # Re-check the setting after polling, so a new delay can affect this wait.
+        if elapsed >= max(1, int(state.get("post_delay", seconds))):
+            break
+        time.sleep(1)
+        elapsed += 1
+
+
 def process_test_commands(state):
     stop_auto_publish = False
     if not ADMIN_ID:
@@ -305,8 +390,13 @@ def process_test_commands(state):
         )
         return
 
-    for update in result.get("result", []):
-        state["last_update_id"] = update["update_id"]
+    updates = state.pop("pending_updates", []) + result.get("result", [])
+    updates.sort(key=lambda item: item.get("update_id", 0))
+
+    for update in updates:
+        state["last_update_id"] = max(
+            int(state.get("last_update_id", 0)), int(update["update_id"])
+        )
 
         message = update.get("message", {})
         raw_command_text = message.get("text", "").strip()
@@ -386,7 +476,7 @@ def process_test_commands(state):
             save_state(state)
             send_message(
                 chat_id,
-                f"Интервал между публикациями установлен: {state['post_delay']} сек."
+                f"✅ Интервал изменён! Теперь между публикациями {state['post_delay']} сек. Настройка сохранена."
             )
             continue
 
@@ -458,7 +548,7 @@ def process_test_commands(state):
                     except Exception as error:
                         print(f"Add post {add_id} failed: {error}")
                         failures.append(f"{add_id} (ошибка отправки)")
-                    time.sleep(max(1, int(state.get("post_delay", 5))))
+                    sleep_with_command_polling(state, max(1, int(state.get("post_delay", 5))))
 
                 summary = (
                     f"Готово. Опубликовано: {len(successes)} из {len(candidates)}; "
@@ -513,7 +603,7 @@ def process_test_commands(state):
                     except Exception as error:
                         print(f"Test post {test_id} failed: {error}")
                         failures.append(f"{test_id} (ошибка отправки)")
-                    time.sleep(max(1, int(state.get("post_delay", 5))))
+                    sleep_with_command_polling(state, max(1, int(state.get("post_delay", 5))))
 
                 summary = (
                     f"Тест 10 постов завершён. Успешно: {len(successes)}, "
@@ -698,13 +788,16 @@ def main():
         state["initialized"] = True
         save_state(state)
 
-        time.sleep(max(1, int(state.get("post_delay", 5))))
+        sleep_with_command_polling(state, max(1, int(state.get("post_delay", 5))))
 
     print(
         f"Run completed. Last processed post ID: "
         f"{state.get('last_post_id')}"
     )
 
+
+if __name__ == "__main__":
+    main()
 
 if __name__ == "__main__":
     main()
