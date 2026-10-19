@@ -144,6 +144,7 @@ def send_photo(image_data, filename, caption):
         data={
             "chat_id": CHANNEL_ID,
             "caption": caption,
+            "parse_mode": "HTML",
         },
         files={
             "photo": (filename, image_data),
