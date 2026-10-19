@@ -21,6 +21,16 @@ STATE_FILE = Path("state.json")
 MAX_FILE_BYTES = 50 * 1024 * 1024
 TAGS = "valorant rating:explicit"
 
+# Finish the publishing cycle before GitHub Actions' 15-minute hard timeout.
+# This gives the workflow time to commit state.json.
+RUN_STARTED_AT = time.monotonic()
+MAX_RUN_SECONDS = max(60, int(os.environ.get("VALOARTS_MAX_RUN_SECONDS", "720")))
+
+
+def run_deadline_reached():
+    return time.monotonic() - RUN_STARTED_AT >= MAX_RUN_SECONDS
+
+
 SESSION = requests.Session()
 SESSION.headers.update({"User-Agent": "ValoArtsBot/1.0"})
 
@@ -179,6 +189,11 @@ def get_posts_after(last_post_id, max_pages=100):
     collected = {}
     previous_page_ids = None
     for page in range(max_pages):
+        if run_deadline_reached():
+            raise RuntimeError(
+                "Лимит времени на поиск страниц достигнут. "
+                "Состояние не изменено; продолжим на следующем запуске."
+            )
         page_posts = get_posts(page=page)
         if not page_posts:
             # Empty pages may indicate API trouble; only treat an empty page
@@ -1418,6 +1433,10 @@ def main():
     sent_ids = set(str(item) for item in state.get("sent_ids", []))
 
     for post in new_posts:
+        if run_deadline_reached():
+            print("Reached safe run deadline; stopping before the next post to save state.json.")
+            save_state(state)
+            break
         # A manual command may have published a post while auto-publishing was
         # paused, so refresh the set from shared state before every item.
         sent_ids = set(str(item) for item in state.get("sent_ids", []))
@@ -1463,6 +1482,9 @@ def main():
     if state.get("restart_requested", False):
         state["restart_requested"] = False
         save_state(state)
+        if run_deadline_reached():
+            print("Restart deferred to the next scheduled workflow run.")
+            return
         print("Restart requested during publishing; starting a fresh work cycle.")
         return main()
 
