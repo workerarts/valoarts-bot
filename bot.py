@@ -489,6 +489,8 @@ def publish(post, state=None, source="auto", allow_duplicate=False):
         sent_ids.add(post_id)
         state["sent_ids"] = sorted(sent_ids, key=lambda value: int(value))
         record_publication(state, post, method, source)
+        # Track the actual last successfully sent art, not the auto watermark.
+        state["last_published_id"] = post_id
         save_state(state)
 
     return True
@@ -771,6 +773,7 @@ def process_test_commands(state):
             "/stats",
             "/statistics",
             "/clearstats",
+            "/currentpost",
         )
         # Built-in commands take priority over the dynamic /add<agent><count>
         # and /add<post_id> syntax. In particular, /addv1 is NOT agent "v".
@@ -869,6 +872,19 @@ def process_test_commands(state):
             )
             continue
 
+        if command_text == "/currentpost":
+            last_id = state.get("last_published_id")
+            if not last_id:
+                # For existing states, use the latest successful record if available.
+                records = state.get("publication_stats", [])
+                if records:
+                    last_id = records[-1].get("id")
+            if last_id:
+                send_message(chat_id, f"🖼 ID последнего опубликованного арта: {last_id}")
+            else:
+                send_message(chat_id, "ℹ️ Пока нет данных о последнем опубликованном арте.")
+            continue
+
         if command_text in ("/stats", "/statistics"):
             send_message(chat_id, build_stats(state))
             continue
@@ -892,6 +908,7 @@ def process_test_commands(state):
                 "/start — Не имеет функции управления ботом\n"
                 "/restart — Начать рабочий цикл заново без сброса истории\n"
                 "/stats — Подробная статистика публикаций\n"
+                "/currentpost — ID последнего опубликованного арта\n"
                 "/clearstats — Очистить накопленную статистику (без сброса истории ID)\n"
                 "/add<ИмяАгента><КоличествоПостов> — Опубликовать арты выбранного агента (макс. 50)\n"
                 "Пример: /addjett10 — 10 артов с Jett\n"
