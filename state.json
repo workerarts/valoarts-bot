@@ -290,6 +290,17 @@
     "18949265",
     "18950119",
     "18950364",
+    "18953286",
+    "18953327",
+    "18954592",
+    "18954975",
+    "18958417",
+    "18959257",
+    "18961515",
+    "18961517",
+    "18961520",
+    "18961521",
+    "18961609",
     "19070908",
     "19071134",
     "19071150",
@@ -305,13 +316,126 @@
     "19089683",
     "19091563"
   ],
-  "last_update_id": 506713590,
-  "last_post_id": "18950364",
+  "last_update_id": 506713594,
+  "last_post_id": "18961609",
   "post_delay": 3,
   "auto_paused": false,
-  "command_activity": 10,
+  "command_activity": 14,
   "bot_enabled": true,
   "idle_sleep_notified": false,
   "shutdown_once": false,
-  "restart_requested": false
+  "restart_requested": false,
+  "publication_stats": [
+    {
+      "id": "18953286",
+      "at": "2026-10-19T09:55:47.105530+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "jett"
+      ]
+    },
+    {
+      "id": "18953327",
+      "at": "2026-10-19T09:55:54.155628+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "reyna"
+      ]
+    },
+    {
+      "id": "18954592",
+      "at": "2026-10-19T09:56:04.149093+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "skye"
+      ]
+    },
+    {
+      "id": "18954975",
+      "at": "2026-10-19T09:56:11.205610+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "18958417",
+      "at": "2026-10-19T09:56:21.220248+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "reyna"
+      ]
+    },
+    {
+      "id": "18959257",
+      "at": "2026-10-19T09:56:28.300570+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "skye"
+      ]
+    },
+    {
+      "id": "18961515",
+      "at": "2026-10-19T09:56:35.591773+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "reyna"
+      ]
+    },
+    {
+      "id": "18961517",
+      "at": "2026-10-19T09:56:43.925116+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "reyna"
+      ]
+    },
+    {
+      "id": "18961520",
+      "at": "2026-10-19T09:56:51.289322+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "reyna"
+      ]
+    },
+    {
+      "id": "18961521",
+      "at": "2026-10-19T09:56:58.896335+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "reyna"
+      ]
+    },
+    {
+      "id": "18961609",
+      "at": "2026-10-19T09:57:08.803787+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "reyna"
+      ]
+    }
+  ],
+  "last_publication_at": "2026-10-19T09:57:08.803787+00:00"
 }
