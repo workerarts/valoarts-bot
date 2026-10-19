@@ -40,14 +40,62 @@ jobs:
 
       - name: Save state
         if: always()
+        shell: bash
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add state.json
-          if ! git diff --cached --quiet; then
-            git commit -m "Update post history"
-            git push
+          if [ ! -f state.json ]; then
+            echo "state.json missing; nothing to save"
+            exit 0
           fi
+          cp state.json "$RUNNER_TEMP/valoarts-local-state.json"
+          branch="${GITHUB_REF_NAME}"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$branch"
+            # Rebuild the state on the latest remote commit, so a push race
+            # never silently discards successfully sent IDs.
+            python - "$RUNNER_TEMP/valoarts-local-state.json" <<'PYMERGE'
+          import json, subprocess, sys
+          from pathlib import Path
+          local = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          remote_bytes = subprocess.run(
+              ["git", "show", "FETCH_HEAD:state.json"],
+              capture_output=True, check=False,
+          )
+          remote = json.loads(remote_bytes.stdout) if remote_bytes.returncode == 0 else {}
+          merged = dict(remote)
+          merged.update(local)
+          ids = {str(x) for x in remote.get("sent_ids", [])}
+          ids.update(str(x) for x in local.get("sent_ids", []))
+          merged["sent_ids"] = sorted(ids, key=lambda x: int(x))
+          # Never move the automatic publishing cursor backwards during a race.
+          cursors = [v for v in (remote.get("last_post_id"), local.get("last_post_id")) if v is not None]
+          if cursors:
+              merged["last_post_id"] = max(int(v) for v in cursors)
+          Path("state.json").write_text(json.dumps(merged, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PYMERGE
+            git add state.json
+            if git diff --cached --quiet; then
+              echo "No new state changes"
+              exit 0
+            fi
+            # Commit on top of the latest remote tip, not the checkout's stale base.
+            git reset --mixed FETCH_HEAD
+            git add state.json
+            if git diff --cached --quiet; then
+              exit 0
+            fi
+            git commit -m "Update post history" || true
+            if git push origin "HEAD:$branch"; then
+              echo "state.json saved successfully"
+              exit 0
+            fi
+            echo "Push conflict (attempt $attempt/5); retrying"
+            sleep 2
+          done
+          echo "Could not save state.json after 5 attempts" >&2
+          exit 1
 
       - name: Notify admin if GitHub Actions fails
         if: failure()
