@@ -315,7 +315,13 @@ def process_test_commands(state):
         if str(sender.get("id", "")) != ADMIN_ID:
             continue
 
-        if command_text not in ("/testgif", "/testvideo"):
+        supported_commands = (
+            "/testgif",
+            "/testvideo",
+            "/testimage",
+            "/test10",
+        )
+        if command_text not in supported_commands:
             continue
 
         chat_id = chat.get("id")
@@ -324,32 +330,109 @@ def process_test_commands(state):
             print("Test command ignored: use a private chat with the bot")
             continue
 
-        extension = ".gif" if command_text == "/testgif" else ".mp4"
-        label = "GIF" if extension == ".gif" else "видео"
-
         try:
             posts = get_posts()
-            candidates = [
-                post
-                for post in reversed(posts)
-                if Path(urlparse(post["file_url"]).path).suffix.lower()
-                == extension
-            ]
+            sent_ids = set(str(item) for item in state.get("sent_ids", []))
+
+            if command_text == "/test10":
+                supported_extensions = {
+                    ".jpg", ".jpeg", ".png", ".gif", ".mp4"
+                }
+                candidates = [
+                    post
+                    for post in reversed(posts)
+                    if Path(urlparse(post["file_url"]).path).suffix.lower()
+                    in supported_extensions
+                ][:10]
+
+                if not candidates:
+                    send_message(
+                        chat_id,
+                        "Не нашёл подходящих изображений, GIF или видео для теста."
+                    )
+                    continue
+
+                successes = []
+                failures = []
+
+                send_message(
+                    chat_id,
+                    f"Начинаю тест: попробую опубликовать {len(candidates)} постов."
+                )
+
+                for test_post in candidates:
+                    test_id = str(test_post["id"])
+                    try:
+                        published = publish(test_post)
+                        if published:
+                            successes.append(test_id)
+                            sent_ids.add(test_id)
+                            state["sent_ids"] = sorted(
+                                sent_ids, key=lambda value: int(value)
+                            )
+                            save_state(state)
+                        else:
+                            failures.append(f"{test_id} (формат пропущен)")
+                    except Exception as error:
+                        print(f"Test post {test_id} failed: {error}")
+                        failures.append(f"{test_id} (ошибка отправки)")
+                    time.sleep(1)
+
+                summary = (
+                    f"Тест 10 постов завершён. Успешно: {len(successes)}, "
+                    f"ошибок/пропусков: {len(failures)}."
+                )
+                if successes:
+                    summary += "\nОпубликованные ID: " + ", ".join(successes)
+                if failures:
+                    summary += "\nНе удалось: " + ", ".join(failures)
+                send_message(chat_id, summary)
+                continue
+
+            if command_text == "/testimage":
+                image_extensions = {".jpg", ".jpeg", ".png"}
+                candidates = [
+                    post
+                    for post in reversed(posts)
+                    if (
+                        Path(urlparse(post["file_url"]).path).suffix.lower()
+                        in image_extensions
+                        or Path(
+                            urlparse(post.get("sample_url", "")).path
+                        ).suffix.lower() in image_extensions
+                    )
+                ]
+                label = "изображение"
+            else:
+                extension = ".gif" if command_text == "/testgif" else ".mp4"
+                label = "GIF" if extension == ".gif" else "видео"
+                candidates = [
+                    post
+                    for post in reversed(posts)
+                    if Path(urlparse(post["file_url"]).path).suffix.lower()
+                    == extension
+                ]
 
             if not candidates:
                 send_message(
                     chat_id,
-                    f"Не нашёл файл {label} среди доступных результатов API."
+                    f"Не нашёл файл типа «{label}» среди доступных результатов API."
                 )
                 continue
 
             test_post = candidates[0]
+            test_id = str(test_post["id"])
             published = publish(test_post)
 
             if published:
+                sent_ids.add(test_id)
+                state["sent_ids"] = sorted(
+                    sent_ids, key=lambda value: int(value)
+                )
+                save_state(state)
                 send_message(
                     chat_id,
-                    f"Тест успешен: {label} опубликовано в канале."
+                    f"Тест успешен: {label} опубликовано в канале (ID {test_id})."
                 )
             else:
                 send_message(
@@ -392,6 +475,18 @@ def main():
     # Это также работает со старым state.json, в котором ещё нет last_post_id.
     if state.get("last_post_id") is None:
         post_id = str(latest_post["id"])
+        sent_ids = set(str(item) for item in state.get("sent_ids", []))
+
+        if post_id in sent_ids:
+            state["last_post_id"] = post_id
+            state["initialized"] = True
+            save_state(state)
+            print(
+                f"Initial latest post {post_id} was already published by a test command; "
+                "saved it as the starting point."
+            )
+            return
+
         print(f"First run: publishing latest available post {post_id}")
 
         try:
@@ -436,6 +531,13 @@ def main():
     for post in new_posts:
         post_id = str(post["id"])
 
+        if post_id in sent_ids:
+            state["last_post_id"] = post_id
+            state["initialized"] = True
+            save_state(state)
+            print(f"SKIP already published by test command: {post_id}")
+            continue
+
         try:
             published = publish(post)
         except Exception as error:
@@ -464,5 +566,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
