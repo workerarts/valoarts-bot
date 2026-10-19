@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import time
 from collections import Counter
 from datetime import datetime, timedelta, timezone
@@ -62,7 +63,7 @@ def save_state(state):
     temporary.replace(STATE_FILE)
 
 
-def get_posts():
+def get_posts(search_tags=TAGS, post_id=None):
     # Rule34 иногда возвращает пустой ответ даже при HTTP 200.
     # Повторяем запрос несколько раз, прежде чем считать запуск неудачным.
     last_error = None
@@ -78,7 +79,8 @@ def get_posts():
                     "json": "1",
                     "limit": "1000",
                     "pid": "0",
-                    "tags": TAGS,
+                    "tags": search_tags if post_id is None else None,
+                    "id": post_id,
                     "api_key": RULE34_API_KEY,
                     "user_id": RULE34_USER_ID,
                 },
@@ -746,11 +748,12 @@ def process_test_commands(state):
             "/resume",
             "/shutdown",
             "/restart",
-            "/status",
             "/stats",
             "/statistics",
         )
-        if command_text not in supported_commands:
+        custom_add = re.fullmatch(r"/add([a-z][a-z_]*?)([1-9][0-9]*)", command_text, re.I)
+        custom_id = re.fullmatch(r"/add([0-9]+)", command_text, re.I)
+        if command_text not in supported_commands and not custom_add and not custom_id:
             continue
 
         chat_id = chat.get("id")
@@ -805,7 +808,7 @@ def process_test_commands(state):
             stop_auto_publish = True
             continue
 
-        if command_text in ("/pause", "/resume", "/status"):
+        if command_text in ("/pause", "/resume"):
             if command_text == "/pause":
                 state["auto_paused"] = True
                 save_state(state)
@@ -820,16 +823,6 @@ def process_test_commands(state):
                 state["auto_paused"] = False
                 save_state(state)
                 send_message(chat_id, "▶️ Автопубликация возобновлена; бот включён.")
-            else:
-                paused = bool(state.get("auto_paused", False))
-                enabled = bool(state.get("bot_enabled", True))
-                current_delay = int(state.get("post_delay", 5))
-                status = "выключен" if not enabled else ("приостановлена" if paused else "включена")
-                send_message(
-                    chat_id,
-                    f"Статус бота/автопубликации: {status}.\n"
-                    f"Интервал между публикациями: {current_delay} сек."
-                )
             save_state(state)
             continue
 
@@ -855,8 +848,10 @@ def process_test_commands(state):
                 "/shutdown — Остановить текущий запуск; следующий запуск по расписанию продолжит работу\n"
                 "/start — Не имеет функции управления ботом\n"
                 "/restart — Начать рабочий цикл заново без сброса истории\n"
-                "/status — Показать статус бота\n"
-                "/stats — Подробная статистика публикаций\n\n"
+                "/stats — Подробная статистика публикаций\n"
+                "/addjett10 — Опубликовать до 10 артов с Jett (макс. 50)\n"
+                "/addhush5 — Опубликовать до 5 артов с Hush\n"
+                "/add12345678 — Опубликовать пост по ID, только если это VALORANT\n\n"
                 "🧪 Тестовые команды (публикуют последние доступные файлы):\n"
                 "/testimage — Последняя доступная картинка\n"
                 "/testgif — Последняя доступная GIF-анимация\n"
@@ -887,6 +882,72 @@ def process_test_commands(state):
                 chat_id,
                 f"✅ Интервал изменён! Теперь между публикациями {state['post_delay']} сек. Настройка сохранена."
             )
+            continue
+
+        if custom_add or custom_id:
+            # Specific requests are fetched separately, not from the latest
+            # 1000 generic VALORANT results. Never modify the auto watermark.
+            stop_auto_publish = True
+            try:
+                if custom_id:
+                    requested_id = custom_id.group(1)
+                    candidates = get_posts(post_id=requested_id)
+                    candidates = [p for p in candidates if str(p["id"]) == requested_id]
+                    if not candidates:
+                        send_message(chat_id, "❌ Пост не найден или он не относится к VALORANT (rating:explicit).")
+                        continue
+                else:
+                    agent = custom_add.group(1).lower()
+                    count = int(custom_add.group(2))
+                    if count > 50:
+                        send_message(chat_id, "❌ За одну команду можно запросить максимум 50 постов.")
+                        continue
+                    # Query by canonical Rule34 agent tag; Hush may also use
+                    # a plain tag while the canonical tag is being adopted.
+                    candidates = get_posts(search_tags=f"valorant rating:explicit {agent}_(valorant)")
+                    if agent == "hush" and len(candidates) < count:
+                        extra = get_posts(search_tags="valorant rating:explicit hush")
+                        existing = {str(p["id"]) for p in candidates}
+                        candidates.extend(p for p in extra if str(p["id"]) not in existing)
+                    candidates = [
+                        p for p in candidates
+                        if agent in {_hashtag(name) for name in _get_characters(str(p.get("tags", "")).split())}
+                    ]
+                    candidates.sort(key=lambda p: int(p["id"]), reverse=True)
+
+                sent_ids = {str(i) for i in state.get("sent_ids", [])}
+                candidates = [p for p in candidates if str(p["id"]) not in sent_ids]
+                candidates = [p for p in candidates if Path(urlparse(p["file_url"]).path).suffix.lower()
+                              in {".jpg", ".jpeg", ".png", ".gif", ".mp4"}]
+                if not candidates:
+                    send_message(chat_id, "Нет подходящих неопубликованных постов в доступной выборке.")
+                    continue
+                limit = 1 if custom_id else count
+                successes = 0
+                failures = 0
+                send_message(chat_id, f"🔎 Найдено кандидатов: {len(candidates)}. Попробую опубликовать до {limit}.")
+                for item in candidates:
+                    if successes >= limit:
+                        break
+                    try:
+                        outcome = publish(item, state, source="manual")
+                        if outcome is True:
+                            successes += 1
+                        elif outcome is False:
+                            failures += 1
+                    except Exception as error:
+                        failures += 1
+                        notify_admin_error(state, f"Ручная публикация поста ID {item['id']}", error)
+                    if successes < limit:
+                        should_stop = sleep_with_command_polling(state, max(1, int(state.get("post_delay", 5))))
+                        if should_stop and (state.get("shutdown_once") or state.get("restart_requested") or state.get("auto_paused")):
+                            break
+                send_message(chat_id, f"✅ Опубликовано: {successes} из {limit}. Ошибок/пропусков: {failures}.")
+            except Exception as error:
+                notify_admin_error(state, f"Команда {command_text}", error)
+                send_message(chat_id, f"❌ Не удалось выполнить команду: {str(error)[:250]}")
+            finally:
+                save_state(state)
             continue
 
         try:
