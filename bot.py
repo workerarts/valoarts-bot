@@ -324,8 +324,8 @@ def process_test_commands(state):
             "/add1",
             "/add10",
             "/add50",
-            "/addV1",
-            "/addV10",
+            "/addv1",
+            "/addv10",
         )
         if command_text not in supported_commands:
             continue
@@ -344,16 +344,16 @@ def process_test_commands(state):
             # посты, которые обычный цикл бота ещё не обработал. Если бот ещё
             # не инициализирован, доступен только самый новый пост — как при
             # первом обычном запуске.
-            if command_text in ("/add1", "/add10", "/add50", "/addV1", "/addV10"):
+            if command_text in ("/add1", "/add10", "/add50", "/addv1", "/addv10"):
                 stop_auto_publish = True
                 limit = {
                     "/add1": 1,
                     "/add10": 10,
                     "/add50": 50,
-                    "/addV1": 1,
-                    "/addV10": 10,
+                    "/addv1": 1,
+                    "/addv10": 10,
                 }[command_text]
-                videos_only = command_text in ("/addV1", "/addV10")
+                videos_only = command_text in ("/addv1", "/addv10")
                 supported_extensions = {".jpg", ".jpeg", ".png", ".gif", ".mp4"}
                 last_post_id = state.get("last_post_id")
 
