@@ -24,7 +24,7 @@ TAGS = "valorant rating:explicit"
 # Finish the publishing cycle before GitHub Actions' 15-minute hard timeout.
 # This gives the workflow time to commit state.json.
 RUN_STARTED_AT = time.monotonic()
-MAX_RUN_SECONDS = max(60, int(os.environ.get("VALOARTS_MAX_RUN_SECONDS", "840")))
+MAX_RUN_SECONDS = max(60, int(os.environ.get("VALOARTS_MAX_RUN_SECONDS", "870")))
 
 
 def run_deadline_reached():
