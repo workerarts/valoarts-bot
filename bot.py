@@ -24,7 +24,12 @@ SESSION.headers.update({"User-Agent": "ValoArtsBot/1.0"})
 
 def load_state():
     if not STATE_FILE.exists():
-        return {"initialized": False, "sent_ids": []}
+        return {
+            "initialized": False,
+            "sent_ids": [],
+            "auto_paused": False,
+            "command_activity": 0,
+        }
 
     with STATE_FILE.open("r", encoding="utf-8") as file:
         state = json.load(file)
@@ -32,6 +37,9 @@ def load_state():
     if not isinstance(state, dict):
         raise RuntimeError("Invalid state.json")
 
+    # Backward-compatible defaults for new control commands.
+    state.setdefault("auto_paused", False)
+    state.setdefault("command_activity", 0)
     return state
 
 
@@ -396,21 +404,49 @@ def poll_delay_commands(state):
 
 
 def sleep_with_command_polling(state, seconds):
-    """Wait between posts while servicing admin commands.
+    """Wait between posts while servicing administrator commands.
 
-    A command that publishes media runs immediately in this call; when it
-    finishes, the interrupted batch/automatic publishing loop continues.
-    An upload already in progress cannot be cancelled safely, so commands
-    are handled as soon as that upload finishes.
+    Returns True when an admin command asks the automatic publishing loop to
+    stop (for example /pause or a manual /add command).
     """
     elapsed = 0
     while elapsed < max(1, int(state.get("post_delay", seconds))):
-        process_test_commands(state)
+        should_stop = process_test_commands(state)
+        if should_stop or state.get("auto_paused", False):
+            return True
         current_delay = max(1, int(state.get("post_delay", seconds)))
         if elapsed >= current_delay:
             break
         time.sleep(1)
         elapsed += 1
+    return False
+
+
+def wait_while_paused(state, idle_timeout=60):
+    """While auto publishing is paused, handle admin commands for up to
+    idle_timeout seconds after the most recent command, then let this run exit.
+    """
+    print(f"Auto publishing paused; waiting up to {idle_timeout}s for commands.")
+    idle_seconds = 0
+    while state.get("auto_paused", False) and idle_seconds < idle_timeout:
+        previous_activity = int(state.get("command_activity", 0))
+        process_test_commands(state)
+
+        if not state.get("auto_paused", False):
+            print("Pause cleared; automatic publishing can resume.")
+            return
+
+        current_activity = int(state.get("command_activity", 0))
+        if current_activity != previous_activity:
+            # Commands such as /add10 can take time; reset the timer after the
+            # command has completely finished processing.
+            idle_seconds = 0
+        else:
+            time.sleep(1)
+            idle_seconds += 1
+
+    if state.get("auto_paused", False):
+        print("No administrator commands for the idle timeout; ending this run.")
 
 
 def process_test_commands(state):
@@ -480,6 +516,9 @@ def process_test_commands(state):
             "/setdelay1",
             "/setdelay3",
             "/setdelay5",
+            "/pause",
+            "/resume",
+            "/status",
         )
         if command_text not in supported_commands:
             continue
@@ -488,6 +527,36 @@ def process_test_commands(state):
 
         if chat.get("type") != "private":
             print("Test command ignored: use a private chat with the bot")
+            continue
+
+        # Activity marker lets the paused runner restart its 60-second idle timer
+        # after every valid administrator command.
+        state["command_activity"] = int(state.get("command_activity", 0)) + 1
+
+        if command_text in ("/pause", "/resume", "/status"):
+            if command_text == "/pause":
+                state["auto_paused"] = True
+                save_state(state)
+                send_message(
+                    chat_id,
+                    "⏸ Автопубликация приостановлена. Ручные команды продолжают работать. "
+                    "Бот будет ждать команды до 60 секунд после последней команды."
+                )
+                stop_auto_publish = True
+            elif command_text == "/resume":
+                state["auto_paused"] = False
+                save_state(state)
+                send_message(chat_id, "▶️ Автопубликация возобновлена.")
+            else:
+                paused = bool(state.get("auto_paused", False))
+                current_delay = int(state.get("post_delay", 5))
+                status = "приостановлена" if paused else "включена"
+                send_message(
+                    chat_id,
+                    f"Статус автопубликации: {status}.\n"
+                    f"Интервал между публикациями: {current_delay} сек."
+                )
+            save_state(state)
             continue
 
         if command_text in ("/help", "/start"):
@@ -502,7 +571,10 @@ def process_test_commands(state):
                 "/setdelay1 — Интервал 1 секунда между публикациями\n"
                 "/setdelay3 — Интервал 3 секунды между публикациями\n"
                 "/setdelay5 — Интервал 5 секунд между публикациями\n"
-                "/setdelay — Показать текущий интервал\n\n"
+                "/setdelay — Показать текущий интервал\n"
+                "/pause — Приостановить автопубликацию\n"
+                "/resume — Возобновить автопубликацию\n"
+                "/status — Показать статус бота\n\n"
                 "🧪 Тестовые команды (публикуют последние доступные файлы):\n"
                 "/testimage — Последняя доступная картинка\n"
                 "/testgif — Последняя доступная GIF-анимация\n"
@@ -750,16 +822,26 @@ def process_test_commands(state):
 def main():
     state = load_state()
 
-    # Проверяем команды администратора перед обработкой новых публикаций.
-    # Если была команда /add, в этом запуске не запускаем автопубликацию,
-    # иначе бот мог бы выложить больше постов, чем запросил администратор.
-    if process_test_commands(state):
-        print("Manual /add command handled; skipping scheduled publishing this run.")
+    # Commands are handled before any scheduled publishing.
+    stop_requested = process_test_commands(state)
+    if state.get("auto_paused", False):
+        wait_while_paused(state, idle_timeout=60)
+        if state.get("auto_paused", False):
+            return
+    elif stop_requested:
+        print("Manual publishing command handled; skipping scheduled publishing this run.")
         return
 
     posts = get_posts()
     # The API request can take time; handle commands that arrived while it ran.
-    process_test_commands(state)
+    stop_requested = process_test_commands(state)
+    if state.get("auto_paused", False):
+        wait_while_paused(state, idle_timeout=60)
+        if state.get("auto_paused", False):
+            return
+    elif stop_requested:
+        print("Command handled during API request; skipping scheduled publishing this run.")
+        return
     if not posts:
         print("No matching posts returned by Rule34 API.")
         return
@@ -856,7 +938,21 @@ def main():
         state["initialized"] = True
         save_state(state)
 
-        sleep_with_command_polling(state, max(1, int(state.get("post_delay", 5))))
+        should_stop = sleep_with_command_polling(
+            state, max(1, int(state.get("post_delay", 5)))
+        )
+        if should_stop or state.get("auto_paused", False):
+            print("Stopping automatic publishing because of an administrator command.")
+            break
+
+    if state.get("auto_paused", False):
+        wait_while_paused(state, idle_timeout=60)
+        if state.get("auto_paused", False):
+            return
+        # /resume was received during the paused wait; restart this run so
+        # automatic publishing resumes without waiting for the next schedule.
+        print("Pause cleared; restarting automatic publishing.")
+        return main()
 
     print(
         f"Run completed. Last processed post ID: "
