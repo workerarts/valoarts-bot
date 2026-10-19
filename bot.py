@@ -1,6 +1,8 @@
 import json
 import os
 import time
+from collections import Counter
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -297,7 +299,102 @@ def build_caption(post):
     return caption[:1024]
 
 
-def publish(post, state=None):
+def record_publication(state, post, method, source):
+    """Persist successful publication metadata without changing sent_ids."""
+    now = datetime.now(timezone.utc).isoformat()
+    tags = set(str(post.get("tags", "")).lower().split())
+    ai_tags = {"ai_generated", "ai-generated", "ai_art", "ai_artwork", "generated_by_ai", "made_with_ai"}
+    media_type = "gif" if method == "sendAnimation" else ("video" if method == "sendVideo" else "image")
+    record = {
+        "id": str(post["id"]), "at": now, "source": source,
+        "type": media_type, "art": "ai_generated" if tags & ai_tags else "original",
+        "agents": sorted({_hashtag(name) for name in _get_characters(str(post.get("tags", "")).split())}),
+    }
+    records = state.setdefault("publication_stats", [])
+    if not any(str(item.get("id")) == record["id"] for item in records):
+        records.append(record)
+    state["last_publication_at"] = now
+
+
+def record_publication_error(state, context):
+    """Count failed publishing attempts, including repeat attempts."""
+    if state.get("_do_not_save_state"):
+        return
+    if not any(word in context.lower() for word in ("публикац", "поста id", "тестовая публикация")):
+        return
+    state.setdefault("publication_errors", []).append(datetime.now(timezone.utc).isoformat())
+    save_state(state)
+
+
+def build_stats(state):
+    now = datetime.now(timezone.utc)
+    today = now.date()
+    week_start = today - timedelta(days=today.weekday())
+    month_start = today.replace(day=1)
+    records = state.get("publication_stats", [])
+    errors = state.get("publication_errors", [])
+
+    def date_of(value):
+        try:
+            return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc).date()
+        except (ValueError, TypeError, AttributeError):
+            return None
+
+    dates = [date_of(r.get("at")) for r in records]
+    def within_24_hours(value):
+        try:
+            dt = datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc)
+            return now - timedelta(hours=24) <= dt <= now
+        except (ValueError, TypeError, AttributeError):
+            return False
+    count_24h = sum(within_24_hours(r.get("at")) for r in records)
+    error_dates = [date_of(e) for e in errors]
+    agents = Counter(agent for r in records for agent in set(r.get("agents", [])))
+    types = Counter(r.get("type") for r in records)
+    arts = Counter(r.get("art") for r in records)
+    sources = Counter(r.get("source") for r in records)
+    enabled = state.get("bot_enabled", True)
+    paused = state.get("auto_paused", False)
+    status = "выключен" if not enabled else ("пауза" if paused else "работает")
+    last_at = state.get("last_publication_at")
+    try:
+        last_text = datetime.fromisoformat(last_at).astimezone(timezone.utc).strftime("%d.%m.%Y %H:%M UTC") if last_at else "нет данных"
+    except (ValueError, TypeError):
+        last_text = "нет данных"
+    top = "\n".join(f"{i}. #{name} — {count}" for i, (name, count) in enumerate(agents.most_common(5), 1)) or "Пока нет данных"
+    return (
+        "📊 Статистика ValoArtsBot\n"
+        "(время и периоды: UTC)\n\n"
+        f"🤖 Статус: {status}\n"
+        f"📚 Учтено старых и новых ID: {len(set(map(str, state.get('sent_ids', []))))}\n"
+        f"✅ Успешных публикаций с обновления: {len(records)}\n"
+        f"🕐 За 24 часа: {count_24h}\n"
+        f"📅 Сегодня: {sum(d == today for d in dates)}\n"
+        f"📆 Эта неделя: {sum(d is not None and d >= week_start for d in dates)}\n"
+        f"🗓 Этот месяц: {sum(d is not None and d >= month_start for d in dates)}\n\n"
+        "📈 Способ публикации\n"
+        f"Автоматически: {sources['auto']}\n"
+        f"Вручную и тесты: {sources['manual']}\n\n"
+        "🎞 Типы медиа\n"
+        f"Изображения: {types['image']}\nGIF: {types['gif']}\nВидео: {types['video']}\n\n"
+        "🎨 Тип арта\n"
+        f"#original: {arts['original']}\n#ai_generated: {arts['ai_generated']}\n\n"
+        f"🏆 Топ-5 агентов\n{top}\n\n"
+        "⚠️ Ошибки публикации (попытки)\n"
+        f"Всего: {len(errors)}\n"
+        f"Сегодня: {sum(d == today for d in error_dates)}\n"
+        f"Неделя: {sum(d is not None and d >= week_start for d in error_dates)}\n"
+        f"Месяц: {sum(d is not None and d >= month_start for d in error_dates)}\n\n"
+        "⚙️ Состояние\n"
+        f"Интервал: {state.get('post_delay', 5)} сек.\n"
+        f"Последний обработанный ID: {state.get('last_post_id', 'нет данных')}\n"
+        f"Последняя публикация: {last_text}\n\n"
+        "Детальная статистика собирается только с обновления.\n"
+        "Периоды считаются по UTC."
+    )
+
+
+def publish(post, state=None, source="auto"):
     post_id = str(post["id"])
 
     # Central duplicate guard: every publication path (automatic, /add and
@@ -391,6 +488,7 @@ def publish(post, state=None):
         sent_ids = {str(item) for item in state.get("sent_ids", [])}
         sent_ids.add(post_id)
         state["sent_ids"] = sorted(sent_ids, key=lambda value: int(value))
+        record_publication(state, post, method, source)
         save_state(state)
 
     return True
@@ -414,6 +512,10 @@ def notify_admin_error(state, context, error):
     details = f"{type(error).__name__}: {error}"
     fingerprint = details[:500]
     print(f"ERROR [{context}]: {details}")
+    try:
+        record_publication_error(state, context)
+    except Exception as stats_error:
+        print(f"Could not save publication error statistics: {stats_error}")
 
     if not ADMIN_ID:
         print("Error notification skipped: TELEGRAM_ADMIN_ID is missing")
@@ -645,6 +747,8 @@ def process_test_commands(state):
             "/shutdown",
             "/restart",
             "/status",
+            "/stats",
+            "/statistics",
         )
         if command_text not in supported_commands:
             continue
@@ -729,6 +833,10 @@ def process_test_commands(state):
             save_state(state)
             continue
 
+        if command_text in ("/stats", "/statistics"):
+            send_message(chat_id, build_stats(state))
+            continue
+
         if command_text == "/help":
             help_text = (
                 "📋 Команды ValoArtsBot\n\n"
@@ -747,7 +855,8 @@ def process_test_commands(state):
                 "/shutdown — Остановить текущий запуск; следующий запуск по расписанию продолжит работу\n"
                 "/start — Не имеет функции управления ботом\n"
                 "/restart — Начать рабочий цикл заново без сброса истории\n"
-                "/status — Показать статус бота\n\n"
+                "/status — Показать статус бота\n"
+                "/stats — Подробная статистика публикаций\n\n"
                 "🧪 Тестовые команды (публикуют последние доступные файлы):\n"
                 "/testimage — Последняя доступная картинка\n"
                 "/testgif — Последняя доступная GIF-анимация\n"
@@ -838,7 +947,7 @@ def process_test_commands(state):
                     if add_id in sent_ids:
                         continue
                     try:
-                        published = publish(add_post, state)
+                        published = publish(add_post, state, source="manual")
                         if published is True:
                             successes.append(add_id)
                         elif published is None:
@@ -901,7 +1010,7 @@ def process_test_commands(state):
                     sent_ids = set(str(item) for item in state.get("sent_ids", []))
                     test_id = str(test_post["id"])
                     try:
-                        published = publish(test_post, state)
+                        published = publish(test_post, state, source="manual")
                         if published is True:
                             successes.append(test_id)
                         elif published is None:
@@ -969,7 +1078,7 @@ def process_test_commands(state):
 
             test_post = candidates[0]
             test_id = str(test_post["id"])
-            published = publish(test_post, state)
+            published = publish(test_post, state, source="manual")
 
             if published is True:
                 send_message(
