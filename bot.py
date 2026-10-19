@@ -811,6 +811,7 @@ def process_test_commands(state):
             "/stats",
             "/statistics",
             "/clearstats",
+            "/clearstate",
             "/currentpost",
         )
         # Built-in commands take priority over the dynamic /add<agent><count>
@@ -910,6 +911,33 @@ def process_test_commands(state):
             )
             continue
 
+        if command_text == "/clearstate":
+            # Explicitly rewind the publishing history to its starting point.
+            # Keep Telegram update offset so the reset command is not replayed.
+            state["initialized"] = True
+            state["sent_ids"] = ["16384015"]
+            state["last_post_id"] = 16384015
+            state["last_published_id"] = "16384015"
+            state["last_publication_at"] = None
+            state["last_notified_error"] = None
+            state["publication_stats"] = []
+            state["publication_errors"] = []
+            state["stats_reset_at"] = datetime.now(timezone.utc).isoformat()
+            # Epoch marker makes GitHub's state merge respect this deliberate reset.
+            state["history_reset_epoch"] = time.time_ns()
+            save_state(state)
+            send_message(
+                chat_id,
+                "🤖 ValoArtsBot\n━━━━━━━━━━━━\n"
+                "🧹 История публикаций сброшена.\n"
+                "📌 Последний обработанный арт: 16384015\n"
+                "📚 В истории остался только этот ID.\n"
+                "▶️ Следующий запуск продолжит автопубликацию после него."
+            )
+            # Stop this run: it may already have fetched posts using the old cursor.
+            stop_auto_publish = True
+            continue
+
         if command_text == "/currentpost":
             last_id = state.get("last_published_id")
             if not last_id:
@@ -948,6 +976,7 @@ def process_test_commands(state):
                 "/stats — Подробная статистика публикаций\n"
                 "/currentpost — ID последнего опубликованного арта\n"
                 "/clearstats — Очистить накопленную статистику (без сброса истории ID)\n"
+                "/clearstate — Сбросить историю публикаций до ID 16384015\n"
                 "/add<ИмяАгента><КоличествоПостов> — Опубликовать арты выбранного агента (макс. 50)\n"
                 "Пример: /addjett10 — 10 артов с Jett\n"
                 "/add12345678 — Опубликовать пост по ID, только если это VALORANT\n\n"
