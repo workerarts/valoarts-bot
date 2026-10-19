@@ -16,7 +16,7 @@ ADMIN_ID = os.environ.get("TELEGRAM_ADMIN_ID", "").strip()
 
 STATE_FILE = Path("state.json")
 MAX_FILE_BYTES = 50 * 1024 * 1024
-TAGS = "valorant rating:explicit"
+TAGS = "valorant rating:explicit order:id_desc"
 
 SESSION = requests.Session()
 SESSION.headers.update({"User-Agent": "ValoArtsBot/1.0"})
@@ -52,15 +52,12 @@ def get_posts():
             "s": "post",
             "q": "index",
             "json": "1",
-            # Берём расширенную выборку, чтобы выбрать из неё
-            # последние 100 постов с нужными тегами.
+            # Получаем последние подходящие публикации по убыванию ID.
             "limit": "1000",
             "pid": "0",
             "tags": TAGS,
             "api_key": RULE34_API_KEY,
             "user_id": RULE34_USER_ID,
-            # Если API поддерживает этот параметр, запросит новые ID первыми.
-            "order": "id_desc",
         },
         timeout=40,
     )
@@ -119,8 +116,7 @@ def get_posts():
 
         results.append(post)
 
-    # Сортируем по ID от старых к новым.
-    # Это также позволит публиковать стартовую сотню последовательно.
+    # Независимо от порядка ответа API обрабатываем публикации от старых к новым.
     return sorted(results, key=lambda post: int(post["id"]))
 
 
@@ -329,55 +325,90 @@ def process_test_commands(state):
 def main():
     state = load_state()
 
-    # Проверяем команды администратора перед публикацией постов.
+    # Проверяем команды администратора перед обработкой новых публикаций.
     process_test_commands(state)
 
-    sent_ids = set(str(item) for item in state.get("sent_ids", []))
     posts = get_posts()
+    if not posts:
+        print("No matching posts returned by Rule34 API.")
+        return
 
-    if not state.get("initialized", False):
-        # Берём 100 публикаций с наибольшими ID из выборки API,
-        # затем публикуем их от старых к новым.
-        posts = posts[-100:]
-        print(f"Initial batch: {len(posts)} posts")
-    else:
-        # При следующих запусках берём только ещё не обработанные посты.
-        posts = [
-            post for post in posts
-            if str(post["id"]) not in sent_ids
-        ]
-        print(f"New posts: {len(posts)}")
+    latest_post = posts[-1]
+    latest_id = int(latest_post["id"])
 
-    for post in posts:
-        post_id = str(post["id"])
-
-        if post_id in sent_ids:
-            continue
+    # При первом запуске новой логики публикуем только самый новый
+    # доступный пост и сохраняем его ID как точку отсчёта.
+    # Это также работает со старым state.json, в котором ещё нет last_post_id.
+    if state.get("last_post_id") is None:
+        post_id = str(latest_post["id"])
+        print(f"First run: publishing latest available post {post_id}")
 
         try:
-            publish(post)
+            publish(latest_post)
         except Exception as error:
-            print(f"FAILED post {post_id}: {error}")
-            time.sleep(1)
-            continue
+            # Не сохраняем watermark при ошибке: следующий запуск попробует снова.
+            print(f"FAILED initial post {post_id}: {error}")
+            return
 
-        # Не повторяем обработку этого поста при следующих запусках.
-        # Сюда попадают и файлы неподдерживаемого формата.
+        state["last_post_id"] = post_id
+        state["initialized"] = True
+        sent_ids = set(str(item) for item in state.get("sent_ids", []))
+        sent_ids.add(post_id)
+        state["sent_ids"] = sorted(sent_ids, key=lambda value: int(value))
+        save_state(state)
+        print(f"Initial latest post saved: {post_id}")
+        return
+
+    last_post_id = int(state["last_post_id"])
+
+    # На следующих запусках берём только посты с ID выше сохранённого.
+    new_posts = [
+        post for post in posts
+        if int(post["id"]) > last_post_id
+    ]
+    new_posts.sort(key=lambda post: int(post["id"]))
+
+    if not new_posts:
+        print(
+            f"No new posts. Latest available ID: {latest_id}; "
+            f"last published/processed ID: {last_post_id}"
+        )
+        return
+
+    print(
+        f"Found {len(new_posts)} new post(s), "
+        f"IDs {new_posts[0]['id']}–{new_posts[-1]['id']}"
+    )
+
+    sent_ids = set(str(item) for item in state.get("sent_ids", []))
+
+    for post in new_posts:
+        post_id = str(post["id"])
+
+        try:
+            published = publish(post)
+        except Exception as error:
+            # Останавливаемся на ошибке, чтобы не перепрыгнуть через этот ID.
+            # Следующий запуск повторит попытку с него.
+            print(f"FAILED post {post_id}: {error}")
+            break
+
+        # Обновляем watermark и для опубликованного поста, и для пропущенного
+        # неподдерживаемого/слишком большого файла, чтобы не зациклиться на нём.
+        state["last_post_id"] = post_id
         sent_ids.add(post_id)
         state["sent_ids"] = sorted(
             sent_ids, key=lambda value: int(value)
         )
         state["initialized"] = True
         save_state(state)
+
         time.sleep(1)
 
-    state["initialized"] = True
-    state["sent_ids"] = sorted(
-        sent_ids, key=lambda value: int(value)
+    print(
+        f"Run completed. Last processed post ID: "
+        f"{state.get('last_post_id')}"
     )
-    save_state(state)
-
-    print("Run completed successfully.")
 
 
 if __name__ == "__main__":
