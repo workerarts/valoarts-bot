@@ -180,7 +180,23 @@ def send_media(method, field_name, file_data, filename, caption):
 
 def publish(post):
     post_id = str(post["id"])
-    media_url = post["file_url"]
+    original_url = post["file_url"]
+    original_extension = Path(urlparse(original_url).path).suffix.lower()
+
+    # For still images, use Rule34's sample_url when available.
+    # It is typically a smaller, web-friendly JPG than the full-resolution file.
+    # Keep the original file for GIFs and videos so animation is not lost.
+    media_url = original_url
+    if original_extension in (".jpg", ".jpeg", ".png"):
+        sample_url = post.get("sample_url")
+        sample_extension = (
+            Path(urlparse(sample_url).path).suffix.lower()
+            if sample_url
+            else ""
+        )
+        if sample_url and sample_extension in (".jpg", ".jpeg", ".png"):
+            media_url = sample_url
+
     extension = Path(urlparse(media_url).path).suffix.lower()
 
     response = SESSION.get(media_url, timeout=60)
@@ -448,4 +464,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
