@@ -332,6 +332,9 @@ def process_test_commands(state):
             "/addv1",
             "/addv10",
             "/setdelay",
+            "/setdelay1",
+            "/setdelay3",
+            "/setdelay5",
         )
         if command_text not in supported_commands:
             continue
@@ -351,9 +354,9 @@ def process_test_commands(state):
                 "/add50 — Опубликовать 50 старых постов, которых ещё нет в канале\\n"
                 "/addv1 — Опубликовать 1 старое видео MP4, которого ещё нет в канале\\n"
                 "/addv10 — Опубликовать 10 старых видео MP4, которых ещё нет в канале\\n"
-                "/setdelay 1 — Интервал 1 секунда между публикациями\\n"
-                "/setdelay 3 — Интервал 3 секунды между публикациями\\n"
-                "/setdelay 5 — Интервал 5 секунд между публикациями\\n"
+                "/setdelay1 — Интервал 1 секунда между публикациями\\n"
+                "/setdelay3 — Интервал 3 секунды между публикациями\\n"
+                "/setdelay5 — Интервал 5 секунд между публикациями\\n"
                 "/setdelay — Показать текущий интервал\\n\\n"
                 "🧪 Тестовые команды (публикуют последние доступные файлы):\\n"
                 "/testimage — Последняя доступная картинка\\n"
@@ -366,22 +369,20 @@ def process_test_commands(state):
             continue
 
         if command_text == "/setdelay":
-            if not command_args:
-                current_delay = int(state.get("post_delay", 5))
-                send_message(
-                    chat_id,
-                    f"Текущий интервал между публикациями: {current_delay} сек."
-                )
-                continue
+            current_delay = int(state.get("post_delay", 5))
+            send_message(
+                chat_id,
+                f"Текущий интервал между публикациями: {current_delay} сек."
+            )
+            continue
 
-            if len(command_args) != 1 or command_args[0] not in {"1", "3", "5"}:
-                send_message(
-                    chat_id,
-                    "Использование: /setdelay 1, /setdelay 3 или /setdelay 5"
-                )
-                continue
-
-            state["post_delay"] = int(command_args[0])
+        delay_commands = {
+            "/setdelay1": 1,
+            "/setdelay3": 3,
+            "/setdelay5": 5,
+        }
+        if command_text in delay_commands:
+            state["post_delay"] = delay_commands[command_text]
             save_state(state)
             send_message(
                 chat_id,
@@ -457,7 +458,7 @@ def process_test_commands(state):
                     except Exception as error:
                         print(f"Add post {add_id} failed: {error}")
                         failures.append(f"{add_id} (ошибка отправки)")
-                    time.sleep(1)
+                    time.sleep(max(1, int(state.get("post_delay", 5))))
 
                 summary = (
                     f"Готово. Опубликовано: {len(successes)} из {len(candidates)}; "
@@ -512,7 +513,7 @@ def process_test_commands(state):
                     except Exception as error:
                         print(f"Test post {test_id} failed: {error}")
                         failures.append(f"{test_id} (ошибка отправки)")
-                    time.sleep(1)
+                    time.sleep(max(1, int(state.get("post_delay", 5))))
 
                 summary = (
                     f"Тест 10 постов завершён. Успешно: {len(successes)}, "
@@ -697,16 +698,13 @@ def main():
         state["initialized"] = True
         save_state(state)
 
-        time.sleep(5)
+        time.sleep(max(1, int(state.get("post_delay", 5))))
 
     print(
         f"Run completed. Last processed post ID: "
         f"{state.get('last_post_id')}"
     )
 
-
-if __name__ == "__main__":
-    main()
 
 if __name__ == "__main__":
     main()
