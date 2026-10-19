@@ -2032,10 +2032,12 @@
     "19086079",
     "19089683",
     "19091563",
-    "19093542"
+    "19093542",
+    "19094256",
+    "19094372"
   ],
-  "last_post_id": 19093542,
-  "last_publication_at": "2026-10-19T15:15:01.416239+00:00",
+  "last_post_id": 19094372,
+  "last_publication_at": "2026-10-19T17:01:51.032911+00:00",
   "last_notified_error": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
   "auto_paused": false,
   "bot_enabled": true,
@@ -22496,10 +22498,30 @@
         "sage",
         "viper"
       ]
+    },
+    {
+      "id": "19094256",
+      "at": "2026-10-19T17:01:46.320036+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "hush"
+      ]
+    },
+    {
+      "id": "19094372",
+      "at": "2026-10-19T17:01:51.032911+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "hush"
+      ]
     }
   ],
-  "last_published_id": "19093542",
-  "last_update_id": 506713659,
+  "last_published_id": "19094372",
+  "last_update_id": 506713660,
   "post_delay": 1,
   "publication_errors": [
     "2026-10-19T13:39:33.587023+00:00",
