@@ -1,4 +1,3 @@
-
 import json
 import os
 import time
@@ -17,7 +16,6 @@ ADMIN_ID = os.environ.get("TELEGRAM_ADMIN_ID", "").strip()
 
 STATE_FILE = Path("state.json")
 MAX_FILE_BYTES = 50 * 1024 * 1024
-
 TAGS = "valorant rating:explicit"
 
 SESSION = requests.Session()
@@ -46,17 +44,23 @@ def save_state(state):
     temporary.replace(STATE_FILE)
 
 
-params={
-    "page": "dapi",
-    "s": "post",
-    "q": "index",
-    "json": "1",
-    "limit": "100",
-    "pid": "0",
-    "tags": TAGS,
-    "api_key": RULE34_API_KEY,
-    "user_id": RULE34_USER_ID,
-    "order": "id_desc",
+def get_posts():
+    response = SESSION.get(
+        API_URL,
+        params={
+            "page": "dapi",
+            "s": "post",
+            "q": "index",
+            "json": "1",
+            # Берём расширенную выборку, чтобы выбрать из неё
+            # последние 100 постов с нужными тегами.
+            "limit": "1000",
+            "pid": "0",
+            "tags": TAGS,
+            "api_key": RULE34_API_KEY,
+            "user_id": RULE34_USER_ID,
+            # Если API поддерживает этот параметр, запросит новые ID первыми.
+            "order": "id_desc",
         },
         timeout=40,
     )
@@ -115,7 +119,9 @@ params={
 
         results.append(post)
 
-    return sorted(results, key=lambda p: int(p["id"]))
+    # Сортируем по ID от старых к новым.
+    # Это также позволит публиковать стартовую сотню последовательно.
+    return sorted(results, key=lambda post: int(post["id"]))
 
 
 def send_media(method, field_name, file_data, filename, caption):
@@ -151,7 +157,6 @@ def send_media(method, field_name, file_data, filename, caption):
 def publish(post):
     post_id = str(post["id"])
     media_url = post["file_url"]
-
     extension = Path(urlparse(media_url).path).suffix.lower()
 
     response = SESSION.get(media_url, timeout=60)
@@ -168,7 +173,6 @@ def publish(post):
         if not content_type.startswith("image/"):
             print(f"SKIP invalid image: {post_id}")
             return False
-
         method = "sendPhoto"
         field_name = "photo"
 
@@ -176,7 +180,6 @@ def publish(post):
         if file_data[:6] not in (b"GIF87a", b"GIF89a"):
             print(f"SKIP invalid GIF: {post_id}")
             return False
-
         method = "sendAnimation"
         field_name = "animation"
         extension = ".gif"
@@ -185,7 +188,6 @@ def publish(post):
         if extension != ".mp4" and file_data[4:8] != b"ftyp":
             print(f"SKIP invalid MP4: {post_id}")
             return False
-
         method = "sendVideo"
         field_name = "video"
         extension = ".mp4"
@@ -214,10 +216,7 @@ def publish(post):
 def send_message(chat_id, message_text):
     response = SESSION.post(
         f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-        data={
-            "chat_id": chat_id,
-            "text": message_text,
-        },
+        data={"chat_id": chat_id, "text": message_text},
         timeout=30,
     )
     response.raise_for_status()
@@ -266,7 +265,6 @@ def process_test_commands(state):
         chat = message.get("chat", {})
         sender = message.get("from", {})
 
-        # Игнорируем сообщения от всех, кроме администратора.
         if str(sender.get("id", "")) != ADMIN_ID:
             continue
 
@@ -284,7 +282,6 @@ def process_test_commands(state):
 
         try:
             posts = get_posts()
-
             candidates = [
                 post
                 for post in reversed(posts)
@@ -299,7 +296,6 @@ def process_test_commands(state):
                 )
                 continue
 
-            # Берём самый новый результат с нужным расширением.
             test_post = candidates[0]
             published = publish(test_post)
 
@@ -316,7 +312,6 @@ def process_test_commands(state):
 
         except Exception as error:
             print(f"Test command failed: {error}")
-
             try:
                 send_message(
                     chat_id,
@@ -334,19 +329,19 @@ def process_test_commands(state):
 def main():
     state = load_state()
 
-    # Сначала проверяем команды администратора.
+    # Проверяем команды администратора перед публикацией постов.
     process_test_commands(state)
 
-    sent_ids = set(
-        str(item) for item in state.get("sent_ids", [])
-    )
-
+    sent_ids = set(str(item) for item in state.get("sent_ids", []))
     posts = get_posts()
 
     if not state.get("initialized", False):
+        # Берём 100 публикаций с наибольшими ID из выборки API,
+        # затем публикуем их от старых к новым.
         posts = posts[-100:]
         print(f"Initial batch: {len(posts)} posts")
     else:
+        # При следующих запусках берём только ещё не обработанные посты.
         posts = [
             post for post in posts
             if str(post["id"]) not in sent_ids
@@ -360,21 +355,20 @@ def main():
             continue
 
         try:
-            published = publish(post)
+            publish(post)
         except Exception as error:
             print(f"FAILED post {post_id}: {error}")
             time.sleep(1)
             continue
 
-        # Сохраняем ID, даже если формат не поддерживается,
-        # чтобы не проверять один и тот же пост снова.
+        # Не повторяем обработку этого поста при следующих запусках.
+        # Сюда попадают и файлы неподдерживаемого формата.
         sent_ids.add(post_id)
         state["sent_ids"] = sorted(
             sent_ids, key=lambda value: int(value)
         )
         state["initialized"] = True
         save_state(state)
-
         time.sleep(1)
 
     state["initialized"] = True
@@ -388,3 +382,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
