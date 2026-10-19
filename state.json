@@ -1,10 +1,133 @@
-
 {
   "initialized": true,
   "sent_ids": [
-    "16384015"
+    "16384015",
+    "18148927",
+    "18148929",
+    "18149384",
+    "18150970",
+    "18151549",
+    "18151556",
+    "18152948",
+    "18152953",
+    "18157352",
+    "18157706"
   ],
-  "last_post_id": 16384015,
-  "last_publication_at": "2026-10-19T10:32:38.768146+00:00",
-  "last_notified_error": null
+  "last_post_id": 18157706,
+  "last_publication_at": "2026-10-19T11:08:22.972032+00:00",
+  "last_notified_error": null,
+  "auto_paused": false,
+  "bot_enabled": true,
+  "shutdown_once": false,
+  "restart_requested": false,
+  "command_activity": 2,
+  "idle_sleep_notified": false,
+  "publication_stats": [
+    {
+      "id": "18148927",
+      "at": "2026-10-19T11:07:15.285420+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "killjoy"
+      ]
+    },
+    {
+      "id": "18148929",
+      "at": "2026-10-19T11:07:27.660522+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "clove",
+        "killjoy",
+        "neon"
+      ]
+    },
+    {
+      "id": "18149384",
+      "at": "2026-10-19T11:07:42.873655+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "fade"
+      ]
+    },
+    {
+      "id": "18150970",
+      "at": "2026-10-19T11:07:58.024067+00:00",
+      "source": "auto",
+      "type": "video",
+      "art": "original",
+      "agents": [
+        "jett"
+      ]
+    },
+    {
+      "id": "18151549",
+      "at": "2026-10-19T11:08:02.840220+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "viper"
+      ]
+    },
+    {
+      "id": "18151556",
+      "at": "2026-10-19T11:08:04.661313+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "viper"
+      ]
+    },
+    {
+      "id": "18152948",
+      "at": "2026-10-19T11:08:09.354877+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "viper"
+      ]
+    },
+    {
+      "id": "18152953",
+      "at": "2026-10-19T11:08:11.034284+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "viper"
+      ]
+    },
+    {
+      "id": "18157352",
+      "at": "2026-10-19T11:08:15.873719+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "reyna"
+      ]
+    },
+    {
+      "id": "18157706",
+      "at": "2026-10-19T11:08:22.972032+00:00",
+      "source": "auto",
+      "type": "video",
+      "art": "ai_generated",
+      "agents": [
+        "sage",
+        "viper"
+      ]
+    }
+  ],
+  "last_published_id": "18157706",
+  "last_update_id": 506713635,
+  "post_delay": 1
 }
