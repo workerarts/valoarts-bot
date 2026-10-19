@@ -2,7 +2,7 @@ name: ValoArts Bot
 
 on:
   schedule:
-    - cron: "*/20 * * * *"
+    - cron: "*/15 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -36,7 +36,7 @@ jobs:
 
       - name: Run bot
         env:
-          VALOARTS_MAX_RUN_SECONDS: "840"
+          VALOARTS_MAX_RUN_SECONDS: "870"
           TELEGRAM_ADMIN_ID: ${{ secrets.TELEGRAM_ADMIN_ID }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
