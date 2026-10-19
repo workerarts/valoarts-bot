@@ -496,7 +496,29 @@ def publish(post, state=None, source="auto"):
     return True
 
 
+def format_notification(message_text):
+    """One consistent style for every administrator notification."""
+    return "🤖 ValoArtsBot\n━━━━━━━━━━━━\n" + str(message_text).strip()
+
+
+def notify_start(chat_id, action, requested):
+    send_message(chat_id, f"⏳ Начинаю {action}\n📦 Запрошено: {requested}")
+
+
+def notify_finish(chat_id, action, requested, successes, failures=0, details=""):
+    message = (
+        f"✅ Закончил {action}\n"
+        f"📦 Запрошено: {requested}\n"
+        f"📤 Опубликовано: {successes}\n"
+        f"⚠️ Ошибок/пропусков: {failures}"
+    )
+    if details:
+        message += "\n" + details
+    send_message(chat_id, message)
+
+
 def send_message(chat_id, message_text):
+    message_text = format_notification(message_text)
     response = SESSION.post(
         f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
         data={"chat_id": chat_id, "text": message_text},
@@ -606,7 +628,7 @@ def poll_delay_commands(state):
             try:
                 send_message(
                     chat_id,
-                    f"Текущий интервал между публикациями: {current_delay} сек."
+                    f"⏱ Интервал между публикациями: {current_delay} сек."
                 )
             except Exception as error:
                 print(f"Could not send current delay: {error}")
@@ -883,7 +905,7 @@ def process_test_commands(state):
             current_delay = int(state.get("post_delay", 5))
             send_message(
                 chat_id,
-                f"Текущий интервал между публикациями: {current_delay} сек."
+                f"⏱ Интервал между публикациями: {current_delay} сек."
             )
             continue
 
@@ -936,12 +958,12 @@ def process_test_commands(state):
                 candidates = [p for p in candidates if Path(urlparse(p["file_url"]).path).suffix.lower()
                               in {".jpg", ".jpeg", ".png", ".gif", ".mp4"}]
                 if not candidates:
-                    send_message(chat_id, "Нет подходящих неопубликованных постов в доступной выборке.")
+                    send_message(chat_id, "⚠️ Добавление не начато: подходящих неопубликованных постов не найдено.")
                     continue
                 limit = 1 if custom_id else count
                 successes = 0
                 failures = 0
-                send_message(chat_id, f"🔎 Найдено кандидатов: {len(candidates)}. Попробую опубликовать до {limit}.")
+                notify_start(chat_id, "добавление артов", limit)
                 for item in candidates:
                     if successes >= limit:
                         break
@@ -958,7 +980,7 @@ def process_test_commands(state):
                         should_stop = sleep_with_command_polling(state, max(1, int(state.get("post_delay", 5))))
                         if should_stop and (state.get("shutdown_once") or state.get("restart_requested") or state.get("auto_paused")):
                             break
-                send_message(chat_id, f"✅ Опубликовано: {successes} из {limit}. Ошибок/пропусков: {failures}.")
+                notify_finish(chat_id, "добавление артов", limit, successes, failures)
             except Exception as error:
                 notify_admin_error(state, f"Команда {command_text}", error)
                 send_message(chat_id, f"❌ Не удалось выполнить команду: {str(error)[:250]}")
@@ -1005,15 +1027,12 @@ def process_test_commands(state):
                 if not candidates:
                     send_message(
                         chat_id,
-                        "Не найдено подходящих постов, которых ещё нет в sent_ids, в доступной выборке Rule34."
+                        "⚠️ Добавление не начато: подходящих неопубликованных постов не найдено в выборке Rule34."
                     )
                     continue
 
                 label = "видео" if videos_only else "медиа"
-                send_message(
-                    chat_id,
-                    f"Начинаю публикацию: {len(candidates)} {label}."
-                )
+                notify_start(chat_id, "добавление артов" if not videos_only else "добавление видео", len(candidates))
                 successes = []
                 failures = []
 
@@ -1051,7 +1070,8 @@ def process_test_commands(state):
                     summary += "\nID публикаций: " + ", ".join(successes)
                 if failures:
                     summary += "\nНе удалось: " + ", ".join(failures)
-                send_message(chat_id, summary)
+                notify_finish(chat_id, "добавление артов" if not videos_only else "добавление видео", len(candidates), len(successes), len(failures),
+                              ("ID публикаций: " + ", ".join(successes)) if successes else "")
                 continue
 
             if command_text == "/test10":
@@ -1070,17 +1090,14 @@ def process_test_commands(state):
                 if not candidates:
                     send_message(
                         chat_id,
-                        "Не нашёл подходящих изображений, GIF или видео для теста."
+                        "⚠️ Тест не начат: подходящих изображений, GIF или видео не найдено."
                     )
                     continue
 
                 successes = []
                 failures = []
 
-                send_message(
-                    chat_id,
-                    f"Начинаю тест: попробую опубликовать {len(candidates)} постов."
-                )
+                notify_start(chat_id, "тестовую публикацию", len(candidates))
 
                 for test_post in candidates:
                     sent_ids = set(str(item) for item in state.get("sent_ids", []))
@@ -1114,7 +1131,8 @@ def process_test_commands(state):
                     summary += "\nОпубликованные ID: " + ", ".join(successes)
                 if failures:
                     summary += "\nНе удалось: " + ", ".join(failures)
-                send_message(chat_id, summary)
+                notify_finish(chat_id, "тестовую публикацию", len(candidates), len(successes), len(failures),
+                              ("ID публикаций: " + ", ".join(successes)) if successes else "")
                 continue
 
             if command_text == "/testimage":
@@ -1148,28 +1166,29 @@ def process_test_commands(state):
             if not candidates:
                 send_message(
                     chat_id,
-                    f"Не нашёл файл типа «{label}» среди доступных результатов API."
+                    f"⚠️ Тест не начат: файл типа «{label}» не найден."
                 )
                 continue
 
             test_post = candidates[0]
             test_id = str(test_post["id"])
+            notify_start(chat_id, "тестовую публикацию", 1)
             published = publish(test_post, state, source="manual")
 
             if published is True:
                 send_message(
                     chat_id,
-                    f"Тест успешен: {label} опубликовано в канале (ID {test_id})."
+                    f"✅ Закончил тестовую публикацию\n📦 Запрошено: 1\n📤 Опубликовано: 1\n⚠️ Ошибок/пропусков: 0\nID: {test_id}"
                 )
             elif published is None:
                 send_message(
                     chat_id,
-                    f"Этот материал уже отмечен как опубликованный (ID {test_id}); повторно не отправлял."
+                    f"⚠️ Закончил тестовую публикацию\n📦 Запрошено: 1\n📤 Опубликовано: 0\n⚠️ Пропущено: 1\nID {test_id} уже опубликован."
                 )
             else:
                 send_message(
                     chat_id,
-                    f"Не удалось опубликовать выбранный файл ({label})."
+                    f"❌ Закончил тестовую публикацию\n📦 Запрошено: 1\n📤 Опубликовано: 0\n⚠️ Ошибок/пропусков: 1\nТип: {label}"
                 )
 
             # A command may have arrived while the media was uploading.
