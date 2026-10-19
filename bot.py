@@ -347,12 +347,18 @@ def poll_delay_commands(state):
 
 
 def sleep_with_command_polling(state, seconds):
-    """Wait between posts, checking delay commands once per second."""
+    """Wait between posts while servicing admin commands.
+
+    A command that publishes media runs immediately in this call; when it
+    finishes, the interrupted batch/automatic publishing loop continues.
+    An upload already in progress cannot be cancelled safely, so commands
+    are handled as soon as that upload finishes.
+    """
     elapsed = 0
     while elapsed < max(1, int(state.get("post_delay", seconds))):
-        poll_delay_commands(state)
-        # Re-check the setting after polling, so a new delay can affect this wait.
-        if elapsed >= max(1, int(state.get("post_delay", seconds))):
+        process_test_commands(state)
+        current_delay = max(1, int(state.get("post_delay", seconds)))
+        if elapsed >= current_delay:
             break
         time.sleep(1)
         elapsed += 1
@@ -533,7 +539,10 @@ def process_test_commands(state):
                 failures = []
 
                 for add_post in candidates:
+                    sent_ids = set(str(item) for item in state.get("sent_ids", []))
                     add_id = str(add_post["id"])
+                    if add_id in sent_ids:
+                        continue
                     try:
                         published = publish(add_post)
                         if published:
@@ -588,6 +597,7 @@ def process_test_commands(state):
                 )
 
                 for test_post in candidates:
+                    sent_ids = set(str(item) for item in state.get("sent_ids", []))
                     test_id = str(test_post["id"])
                     try:
                         published = publish(test_post)
@@ -667,6 +677,10 @@ def process_test_commands(state):
                     f"Не удалось опубликовать выбранный файл ({label})."
                 )
 
+            # A command may have arrived while the media was uploading.
+            # Process it now, before returning to the previous task.
+            process_test_commands(state)
+
         except Exception as error:
             print(f"Test command failed: {error}")
             try:
@@ -695,6 +709,8 @@ def main():
         return
 
     posts = get_posts()
+    # The API request can take time; handle commands that arrived while it ran.
+    process_test_commands(state)
     if not posts:
         print("No matching posts returned by Rule34 API.")
         return
@@ -761,6 +777,9 @@ def main():
     sent_ids = set(str(item) for item in state.get("sent_ids", []))
 
     for post in new_posts:
+        # A manual command may have published a post while auto-publishing was
+        # paused, so refresh the set from shared state before every item.
+        sent_ids = set(str(item) for item in state.get("sent_ids", []))
         post_id = str(post["id"])
 
         if post_id in sent_ids:
@@ -795,9 +814,6 @@ def main():
         f"{state.get('last_post_id')}"
     )
 
-
-if __name__ == "__main__":
-    main()
 
 if __name__ == "__main__":
     main()
