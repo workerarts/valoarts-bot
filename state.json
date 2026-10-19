@@ -324,6 +324,20 @@
     "18974642",
     "18976309",
     "18978815",
+    "18979264",
+    "18981843",
+    "18981847",
+    "18981851",
+    "18982014",
+    "18982297",
+    "18982601",
+    "18985138",
+    "18985467",
+    "18986859",
+    "18989384",
+    "18989636",
+    "18992099",
+    "18992332",
     "19051583",
     "19051863",
     "19052042",
@@ -349,11 +363,11 @@
     "19089683",
     "19091563"
   ],
-  "last_update_id": 506713597,
-  "last_post_id": "18978815",
+  "last_update_id": 506713611,
+  "last_post_id": "18992332",
   "post_delay": 3,
   "auto_paused": false,
-  "command_activity": 17,
+  "command_activity": 24,
   "bot_enabled": true,
   "idle_sleep_notified": false,
   "shutdown_once": false,
@@ -798,7 +812,150 @@
       "agents": [
         "sage"
       ]
+    },
+    {
+      "id": "18979264",
+      "at": "2026-10-19T10:24:01.058914+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "18981843",
+      "at": "2026-10-19T10:24:08.638637+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "viper"
+      ]
+    },
+    {
+      "id": "18981847",
+      "at": "2026-10-19T10:24:19.347254+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "chamber",
+        "viper"
+      ]
+    },
+    {
+      "id": "18981851",
+      "at": "2026-10-19T10:24:26.284370+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "chamber",
+        "viper"
+      ]
+    },
+    {
+      "id": "18982014",
+      "at": "2026-10-19T10:25:36.493997+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "18982297",
+      "at": "2026-10-19T10:25:43.687161+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "18982601",
+      "at": "2026-10-19T10:25:53.957497+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "18985138",
+      "at": "2026-10-19T10:26:01.042737+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "18985467",
+      "at": "2026-10-19T10:26:11.491553+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "18986859",
+      "at": "2026-10-19T10:26:18.738348+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "reyna"
+      ]
+    },
+    {
+      "id": "18989384",
+      "at": "2026-10-19T10:26:28.833762+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "18989636",
+      "at": "2026-10-19T10:26:35.981503+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "18992099",
+      "at": "2026-10-19T10:26:46.159501+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "18992332",
+      "at": "2026-10-19T10:26:53.259104+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
     }
   ],
-  "last_publication_at": "2026-10-19T10:11:49.579090+00:00"
+  "last_publication_at": "2026-10-19T10:26:53.259104+00:00",
+  "last_notified_error": "RuntimeError: Не удалось получить данные Rule34 API после 4 попыток: Rule34 API вернул пустой ответ (HTTP 200)"
 }
