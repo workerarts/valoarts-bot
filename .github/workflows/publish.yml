@@ -32,6 +32,7 @@ jobs:
 
       - name: Run bot
         env:
+          TELEGRAM_ADMIN_ID: ${{ secrets.TELEGRAM_ADMIN_ID }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
           RULE34_API_KEY: ${{ secrets.RULE34_API_KEY }}
