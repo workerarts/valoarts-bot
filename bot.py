@@ -262,13 +262,11 @@ def build_caption(post):
             hashtags.append("#ai_generated")
             seen.add("ai_generated")
     else:
-        artist = _get_artist(post, raw_tags, normalized_tags)
-        # For non-AI original artwork, use a consistent #original tag instead
-        # of exposing the artist's name in the caption.
-        if artist or "original" in normalized_tags:
-            if "original" not in seen:
-                hashtags.append("#original")
-                seen.add("original")
+        # Any artwork without AI-generation tags is marked as original.
+        # Never include the artist's username in the caption.
+        if "original" not in seen:
+            hashtags.append("#original")
+            seen.add("original")
 
     # Add a media hashtag only for animated formats; ordinary photos get none.
     file_url = str(post.get("file_url", "") or "")
