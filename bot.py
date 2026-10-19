@@ -290,6 +290,38 @@ def send_message(chat_id, message_text):
         raise RuntimeError(f"Telegram API error: {result}")
 
 
+def notify_admin_error(state, context, error):
+    """Notify the administrator once per distinct error to avoid spam."""
+    details = f"{type(error).__name__}: {error}"
+    fingerprint = details[:500]
+    print(f"ERROR [{context}]: {details}")
+
+    if not ADMIN_ID:
+        print("Error notification skipped: TELEGRAM_ADMIN_ID is missing")
+        return
+
+    if state.get("last_notified_error") == fingerprint:
+        print("Same error was already reported; suppressing duplicate notification")
+        return
+
+    message = (
+        "⚠️ Ошибка ValoArtsBot\n\n"
+        f"Этап: {context}\n"
+        f"Ошибка: {details[:700]}"
+    )
+
+    try:
+        send_message(ADMIN_ID, message)
+        if not state.get("_do_not_save_state"):
+            state["last_notified_error"] = fingerprint
+            save_state(state)
+        print("Error notification sent to administrator")
+    except Exception as notify_error:
+        # If Telegram itself is unavailable, there is no way to deliver a
+        # Telegram alert; keep the original error visible in the Actions log.
+        print(f"Could not send error notification: {notify_error}")
+
+
 def poll_delay_commands(state):
     """Check for delay commands during long publishing batches."""
     if not ADMIN_ID:
@@ -406,7 +438,7 @@ def process_test_commands(state):
             raise RuntimeError(f"Telegram getUpdates error: {result}")
 
     except Exception as error:
-        print(f"Could not check Telegram commands: {error}")
+        notify_admin_error(state, "Проверка команд Telegram", error)
         print(
             "If a webhook is configured for this bot, "
             "getUpdates cannot be used until the webhook is removed."
@@ -569,7 +601,7 @@ def process_test_commands(state):
                         else:
                             failures.append(f"{add_id} (формат пропущен)")
                     except Exception as error:
-                        print(f"Add post {add_id} failed: {error}")
+                        notify_admin_error(state, f"Ручная публикация поста ID {add_id}", error)
                         failures.append(f"{add_id} (ошибка отправки)")
                     sleep_with_command_polling(state, max(1, int(state.get("post_delay", 5))))
 
@@ -624,7 +656,7 @@ def process_test_commands(state):
                         else:
                             failures.append(f"{test_id} (формат пропущен)")
                     except Exception as error:
-                        print(f"Test post {test_id} failed: {error}")
+                        notify_admin_error(state, f"Тестовая публикация поста ID {test_id}", error)
                         failures.append(f"{test_id} (ошибка отправки)")
                     sleep_with_command_polling(state, max(1, int(state.get("post_delay", 5))))
 
@@ -699,7 +731,7 @@ def process_test_commands(state):
             process_test_commands(state)
 
         except Exception as error:
-            print(f"Test command failed: {error}")
+            notify_admin_error(state, f"Обработка команды {command_text}", error)
             try:
                 send_message(
                     chat_id,
@@ -758,7 +790,7 @@ def main():
             publish(latest_post, state)
         except Exception as error:
             # Не сохраняем watermark при ошибке: следующий запуск попробует снова.
-            print(f"FAILED initial post {post_id}: {error}")
+            notify_admin_error(state, f"Публикация начального поста ID {post_id}", error)
             return
 
         state["last_post_id"] = post_id
@@ -811,7 +843,7 @@ def main():
         except Exception as error:
             # Останавливаемся на ошибке, чтобы не перепрыгнуть через этот ID.
             # Следующий запуск повторит попытку с него.
-            print(f"FAILED post {post_id}: {error}")
+            notify_admin_error(state, f"Автопубликация поста ID {post_id}", error)
             break
 
         # Обновляем watermark и для опубликованного поста, и для пропущенного
@@ -833,4 +865,14 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as error:
+        # Covers uncaught failures such as Rule34 API or state-file errors.
+        try:
+            current_state = load_state()
+        except Exception as state_error:
+            print(f"Could not load state while reporting failure: {state_error}")
+            current_state = {"_do_not_save_state": True}
+        notify_admin_error(current_state, "Критическая ошибка запуска", error)
+        raise
