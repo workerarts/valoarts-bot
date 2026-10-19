@@ -1,4 +1,3 @@
-
 import json
 import os
 import time
@@ -16,7 +15,7 @@ RULE34_API_KEY = os.environ["RULE34_API_KEY"]
 RULE34_USER_ID = os.environ["RULE34_USER_ID"]
 
 STATE_FILE = Path("state.json")
-MAX_IMAGE_BYTES = 10 * 1024 * 1024
+MAX_FILE_BYTES = 50 * 1024 * 1024
 
 TAGS = (
     "valorant rating:explicit "
@@ -48,7 +47,6 @@ def save_state(state):
         json.dump(state, file, ensure_ascii=False, indent=2)
 
     temporary.replace(STATE_FILE)
-
 
 
 def get_posts():
@@ -89,7 +87,6 @@ def get_posts():
         data = data.get("post", data.get("posts", data.get("data", [])))
 
     if isinstance(data, dict):
-        # Некоторые ответы могут содержать один объект публикации.
         if "id" in data:
             data = [data]
         else:
@@ -110,7 +107,6 @@ def get_posts():
     results = []
 
     blocked_tags = {
-        
     }
 
     for post in data:
@@ -137,22 +133,21 @@ def get_posts():
     return sorted(results, key=lambda p: int(p["id"]))
 
 
-
-def send_photo(image_data, filename, caption):
+def send_media(method, field_name, file_data, filename, caption):
     response = SESSION.post(
-        f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto",
+        f"https://api.telegram.org/bot{BOT_TOKEN}/{method}",
         data={
             "chat_id": CHANNEL_ID,
             "caption": caption,
             "parse_mode": "HTML",
         },
         files={
-            "photo": (filename, image_data),
+            field_name: (filename, file_data),
         },
         timeout=90,
     )
-    response.raise_for_status()
 
+    response.raise_for_status()
     result = response.json()
 
     if not result.get("ok"):
@@ -163,41 +158,75 @@ def send_photo(image_data, filename, caption):
 
 def publish(post):
     post_id = str(post["id"])
-    image_url = post["file_url"]
+    media_url = post["file_url"]
 
-    extension = Path(urlparse(image_url).path).suffix.lower()
+    extension = Path(urlparse(media_url).path).suffix.lower()
 
-    # Публикуем только обычные изображения.
-    if extension not in (".jpg", ".jpeg", ".png"):
-        print(f"SKIP unsupported format: {post_id}")
-        return False
-
-    response = SESSION.get(image_url, timeout=60)
+    response = SESSION.get(media_url, timeout=60)
     response.raise_for_status()
 
     content_type = response.headers.get(
         "Content-Type", ""
     ).lower()
 
-    if not content_type.startswith("image/"):
-        print(f"SKIP non-image file: {post_id}")
+    file_data = response.content
+
+    if len(file_data) > MAX_FILE_BYTES:
+        print(f"SKIP oversized file: {post_id}")
         return False
 
-    image_data = response.content
+    # Определяем тип файла по расширению и Content-Type.
+    if extension in (".jpg", ".jpeg", ".png"):
+        if not content_type.startswith("image/"):
+            print(f"SKIP invalid image: {post_id}")
+            return False
 
-    if len(image_data) > MAX_IMAGE_BYTES:
-        print(f"SKIP oversized file: {post_id}")
+        method = "sendPhoto"
+        field_name = "photo"
+
+    elif extension == ".gif" or content_type == "image/gif":
+        method = "sendAnimation"
+        field_name = "animation"
+
+        if not (
+            extension == ".gif"
+            or file_data[:6] in (b"GIF87a", b"GIF89a")
+        ):
+            print(f"SKIP invalid GIF: {post_id}")
+            return False
+
+        extension = ".gif"
+
+    elif extension == ".mp4" or content_type == "video/mp4":
+        method = "sendVideo"
+        field_name = "video"
+        extension = ".mp4"
+
+        if not (
+            extension == ".mp4"
+            or file_data[4:8] == b"ftyp"
+        ):
+            print(f"SKIP invalid MP4: {post_id}")
+            return False
+
+    else:
+        print(
+            f"SKIP unsupported format: {post_id} "
+            f"({extension}, {content_type})"
+        )
         return False
 
     caption = '<a href="https://t.me/valorantnsfv">R34 Valorant</a>'
 
-    send_photo(
-        image_data,
+    send_media(
+        method,
+        field_name,
+        file_data,
         f"valorant_{post_id}{extension}",
         caption,
     )
 
-    print(f"PUBLISHED: {post_id}")
+    print(f"PUBLISHED: {post_id} ({method})")
     return True
 
 
@@ -227,12 +256,10 @@ def main():
         if post_id in sent_ids:
             continue
 
-        # При ошибке публикации исключение завершит запуск.
-        # Успешно отправленные посты сохраняются сразу.
         published = publish(post)
 
-        # Неподдерживаемые форматы тоже помечаем обработанными,
-        # чтобы не проверять один и тот же файл бесконечно.
+        # Сохраняем ID, чтобы не обрабатывать
+        # публикацию повторно при следующем запуске.
         sent_ids.add(post_id)
         state["sent_ids"] = sorted(
             sent_ids, key=lambda value: int(value)
@@ -249,6 +276,10 @@ def main():
     save_state(state)
 
     print("Run completed successfully.")
+
+
+if __name__ == "__main__":
+    main()
 
 
 if __name__ == "__main__":
