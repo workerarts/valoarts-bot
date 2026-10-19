@@ -750,6 +750,7 @@ def process_test_commands(state):
             "/restart",
             "/stats",
             "/statistics",
+            "/clearstats",
         )
         custom_add = re.fullmatch(r"/add([a-z][a-z_]*?)([1-9][0-9]*)", command_text, re.I)
         custom_id = re.fullmatch(r"/add([0-9]+)", command_text, re.I)
@@ -826,6 +827,21 @@ def process_test_commands(state):
             save_state(state)
             continue
 
+        if command_text == "/clearstats":
+            # Clear only accumulated analytics, never duplicate protection,
+            # the automatic watermark, or bot control settings.
+            state["publication_stats"] = []
+            state["publication_errors"] = []
+            state["last_publication_at"] = None
+            state["stats_reset_at"] = datetime.now(timezone.utc).isoformat()
+            save_state(state)
+            send_message(
+                chat_id,
+                "🧹 Статистика публикаций и ошибок очищена.\n"
+                "История ID (sent_ids) и точка автопубликации сохранены."
+            )
+            continue
+
         if command_text in ("/stats", "/statistics"):
             send_message(chat_id, build_stats(state))
             continue
@@ -849,6 +865,7 @@ def process_test_commands(state):
                 "/start — Не имеет функции управления ботом\n"
                 "/restart — Начать рабочий цикл заново без сброса истории\n"
                 "/stats — Подробная статистика публикаций\n"
+                "/clearstats — Очистить накопленную статистику (без сброса истории ID)\n"
                 "/add<ИмяАгента><КоличествоПостов> — Опубликовать арты выбранного агента (макс. 50)\n"
                 "Пример: /addjett10 — 10 артов с Jett\n"
                 "/add12345678 — Опубликовать пост по ID, только если это VALORANT\n\n"
@@ -887,7 +904,6 @@ def process_test_commands(state):
         if custom_add or custom_id:
             # Specific requests are fetched separately, not from the latest
             # 1000 generic VALORANT results. Never modify the auto watermark.
-            stop_auto_publish = True
             try:
                 if custom_id:
                     requested_id = custom_id.group(1)
@@ -959,7 +975,6 @@ def process_test_commands(state):
             # ещё нет в sent_ids. Автоматическая публикация использует watermark
             # отдельно, ниже в main().
             if command_text in ("/add1", "/add10", "/add50", "/addv1", "/addv10"):
-                stop_auto_publish = True
                 limit = {
                     "/add1": 1,
                     "/add10": 10,
@@ -1208,7 +1223,7 @@ def main():
         if state.get("auto_paused", False) or not state.get("bot_enabled", True):
             return
     elif stop_requested:
-        print("Manual publishing command handled; skipping scheduled publishing this run.")
+        print("A control command requested stopping scheduled publishing this run.")
         return
 
     posts = get_posts()
@@ -1231,7 +1246,7 @@ def main():
         if state.get("auto_paused", False) or not state.get("bot_enabled", True):
             return
     elif stop_requested:
-        print("Command handled during API request; skipping scheduled publishing this run.")
+        print("A control command requested stopping publishing during API request.")
         return
     if not posts:
         print("No matching posts returned by Rule34 API.")
