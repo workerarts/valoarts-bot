@@ -309,7 +309,10 @@ def process_test_commands(state):
         state["last_update_id"] = update["update_id"]
 
         message = update.get("message", {})
-        command_text = message.get("text", "").strip()
+        raw_command_text = message.get("text", "").strip()
+        command_parts = raw_command_text.split()
+        command_text = command_parts[0].split("@", 1)[0] if command_parts else ""
+        command_args = command_parts[1:] if command_parts else []
         chat = message.get("chat", {})
         sender = message.get("from", {})
 
@@ -328,6 +331,7 @@ def process_test_commands(state):
             "/add50",
             "/addv1",
             "/addv10",
+            "/setdelay",
         )
         if command_text not in supported_commands:
             continue
@@ -346,7 +350,11 @@ def process_test_commands(state):
                 "/add10 — Опубликовать 10 старых постов, которых ещё нет в канале\\n"
                 "/add50 — Опубликовать 50 старых постов, которых ещё нет в канале\\n"
                 "/addv1 — Опубликовать 1 старое видео MP4, которого ещё нет в канале\\n"
-                "/addv10 — Опубликовать 10 старых видео MP4, которых ещё нет в канале\\n\\n"
+                "/addv10 — Опубликовать 10 старых видео MP4, которых ещё нет в канале\\n"
+                "/setdelay 1 — Интервал 1 секунда между публикациями\\n"
+                "/setdelay 3 — Интервал 3 секунды между публикациями\\n"
+                "/setdelay 5 — Интервал 5 секунд между публикациями\\n"
+                "/setdelay — Показать текущий интервал\\n\\n"
                 "🧪 Тестовые команды (публикуют последние доступные файлы):\\n"
                 "/testimage — Последняя доступная картинка\\n"
                 "/testgif — Последняя доступная GIF-анимация\\n"
@@ -355,6 +363,30 @@ def process_test_commands(state):
                 "Команды доступны только администратору."
             )
             send_message(chat_id, help_text)
+            continue
+
+        if command_text == "/setdelay":
+            if not command_args:
+                current_delay = int(state.get("post_delay", 5))
+                send_message(
+                    chat_id,
+                    f"Текущий интервал между публикациями: {current_delay} сек."
+                )
+                continue
+
+            if len(command_args) != 1 or command_args[0] not in {"1", "3", "5"}:
+                send_message(
+                    chat_id,
+                    "Использование: /setdelay 1, /setdelay 3 или /setdelay 5"
+                )
+                continue
+
+            state["post_delay"] = int(command_args[0])
+            save_state(state)
+            send_message(
+                chat_id,
+                f"Интервал между публикациями установлен: {state['post_delay']} сек."
+            )
             continue
 
         try:
@@ -672,6 +704,9 @@ def main():
         f"{state.get('last_post_id')}"
     )
 
+
+if __name__ == "__main__":
+    main()
 
 if __name__ == "__main__":
     main()
