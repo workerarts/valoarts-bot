@@ -178,8 +178,16 @@ def send_media(method, field_name, file_data, filename, caption):
         )
 
 
-def publish(post):
+def publish(post, state=None):
     post_id = str(post["id"])
+
+    # Central duplicate guard: every publication path (automatic, /add and
+    # test commands) checks the persistent sent_ids list before sending.
+    if state is not None:
+        sent_ids = {str(item) for item in state.get("sent_ids", [])}
+        if post_id in sent_ids:
+            print(f"SKIP duplicate post: {post_id}")
+            return None
     original_url = post["file_url"]
     original_extension = Path(urlparse(original_url).path).suffix.lower()
 
@@ -257,6 +265,15 @@ def publish(post):
     )
 
     print(f"PUBLISHED: {post_id} ({method})")
+
+    # Save the ID immediately after Telegram confirms a successful send.
+    # This minimizes the chance of reposting if the process stops mid-batch.
+    if state is not None:
+        sent_ids = {str(item) for item in state.get("sent_ids", [])}
+        sent_ids.add(post_id)
+        state["sent_ids"] = sorted(sent_ids, key=lambda value: int(value))
+        save_state(state)
+
     return True
 
 
@@ -544,14 +561,11 @@ def process_test_commands(state):
                     if add_id in sent_ids:
                         continue
                     try:
-                        published = publish(add_post)
-                        if published:
+                        published = publish(add_post, state)
+                        if published is True:
                             successes.append(add_id)
-                            sent_ids.add(add_id)
-                            state["sent_ids"] = sorted(
-                                sent_ids, key=lambda value: int(value)
-                            )
-                            save_state(state)
+                        elif published is None:
+                            print(f"Add post {add_id} skipped: already published")
                         else:
                             failures.append(f"{add_id} (формат пропущен)")
                     except Exception as error:
@@ -574,10 +588,12 @@ def process_test_commands(state):
                 supported_extensions = {
                     ".jpg", ".jpeg", ".png", ".gif", ".mp4"
                 }
+                sent_ids = {str(item) for item in state.get("sent_ids", [])}
                 candidates = [
                     post
                     for post in reversed(posts)
-                    if Path(urlparse(post["file_url"]).path).suffix.lower()
+                    if str(post["id"]) not in sent_ids
+                    and Path(urlparse(post["file_url"]).path).suffix.lower()
                     in supported_extensions
                 ][:10]
 
@@ -600,14 +616,11 @@ def process_test_commands(state):
                     sent_ids = set(str(item) for item in state.get("sent_ids", []))
                     test_id = str(test_post["id"])
                     try:
-                        published = publish(test_post)
-                        if published:
+                        published = publish(test_post, state)
+                        if published is True:
                             successes.append(test_id)
-                            sent_ids.add(test_id)
-                            state["sent_ids"] = sorted(
-                                sent_ids, key=lambda value: int(value)
-                            )
-                            save_state(state)
+                        elif published is None:
+                            print(f"Test post {test_id} skipped: already published")
                         else:
                             failures.append(f"{test_id} (формат пропущен)")
                     except Exception as error:
@@ -628,10 +641,12 @@ def process_test_commands(state):
 
             if command_text == "/testimage":
                 image_extensions = {".jpg", ".jpeg", ".png"}
+                sent_ids = {str(item) for item in state.get("sent_ids", [])}
                 candidates = [
                     post
                     for post in reversed(posts)
-                    if (
+                    if str(post["id"]) not in sent_ids
+                    and (
                         Path(urlparse(post["file_url"]).path).suffix.lower()
                         in image_extensions
                         or Path(
@@ -643,10 +658,12 @@ def process_test_commands(state):
             else:
                 extension = ".gif" if command_text == "/testgif" else ".mp4"
                 label = "GIF" if extension == ".gif" else "видео"
+                sent_ids = {str(item) for item in state.get("sent_ids", [])}
                 candidates = [
                     post
                     for post in reversed(posts)
-                    if Path(urlparse(post["file_url"]).path).suffix.lower()
+                    if str(post["id"]) not in sent_ids
+                    and Path(urlparse(post["file_url"]).path).suffix.lower()
                     == extension
                 ]
 
@@ -659,17 +676,17 @@ def process_test_commands(state):
 
             test_post = candidates[0]
             test_id = str(test_post["id"])
-            published = publish(test_post)
+            published = publish(test_post, state)
 
-            if published:
-                sent_ids.add(test_id)
-                state["sent_ids"] = sorted(
-                    sent_ids, key=lambda value: int(value)
-                )
-                save_state(state)
+            if published is True:
                 send_message(
                     chat_id,
                     f"Тест успешен: {label} опубликовано в канале (ID {test_id})."
+                )
+            elif published is None:
+                send_message(
+                    chat_id,
+                    f"Этот материал уже отмечен как опубликованный (ID {test_id}); повторно не отправлял."
                 )
             else:
                 send_message(
@@ -738,7 +755,7 @@ def main():
         print(f"First run: publishing latest available post {post_id}")
 
         try:
-            publish(latest_post)
+            publish(latest_post, state)
         except Exception as error:
             # Не сохраняем watermark при ошибке: следующий запуск попробует снова.
             print(f"FAILED initial post {post_id}: {error}")
@@ -790,7 +807,7 @@ def main():
             continue
 
         try:
-            published = publish(post)
+            published = publish(post, state)
         except Exception as error:
             # Останавливаемся на ошибке, чтобы не перепрыгнуть через этот ID.
             # Следующий запуск повторит попытку с него.
