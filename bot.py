@@ -28,7 +28,9 @@ def load_state():
             "initialized": False,
             "sent_ids": [],
             "auto_paused": False,
+            "bot_enabled": True,
             "command_activity": 0,
+            "idle_sleep_notified": False,
         }
 
     with STATE_FILE.open("r", encoding="utf-8") as file:
@@ -39,7 +41,9 @@ def load_state():
 
     # Backward-compatible defaults for new control commands.
     state.setdefault("auto_paused", False)
+    state.setdefault("bot_enabled", True)
     state.setdefault("command_activity", 0)
+    state.setdefault("idle_sleep_notified", False)
     return state
 
 
@@ -412,7 +416,7 @@ def sleep_with_command_polling(state, seconds):
     elapsed = 0
     while elapsed < max(1, int(state.get("post_delay", seconds))):
         should_stop = process_test_commands(state)
-        if should_stop or state.get("auto_paused", False):
+        if should_stop or state.get("auto_paused", False) or not state.get("bot_enabled", True):
             return True
         current_delay = max(1, int(state.get("post_delay", seconds)))
         if elapsed >= current_delay:
@@ -447,6 +451,19 @@ def wait_while_paused(state, idle_timeout=60):
 
     if state.get("auto_paused", False):
         print("No administrator commands for the idle timeout; ending this run.")
+        if not state.get("idle_sleep_notified", False) and ADMIN_ID:
+            try:
+                send_message(
+                    ADMIN_ID,
+                    "🌙 ValoArtsBot переходит в режим ожидания\n"
+                    "⏸️ Автопубликация приостановлена.\n"
+                    "💤 Команд за последнюю минуту не поступило.\n"
+                    "🔄 Следующая проверка — при следующем запуске GitHub Actions.",
+                )
+                state["idle_sleep_notified"] = True
+                save_state(state)
+            except Exception as error:
+                print(f"Could not send idle/waiting notification: {error}")
 
 
 def process_test_commands(state):
@@ -518,6 +535,8 @@ def process_test_commands(state):
             "/setdelay5",
             "/pause",
             "/resume",
+            "/shutdown",
+            "/restart",
             "/status",
         )
         if command_text not in supported_commands:
@@ -532,6 +551,40 @@ def process_test_commands(state):
         # Activity marker lets the paused runner restart its 60-second idle timer
         # after every valid administrator command.
         state["command_activity"] = int(state.get("command_activity", 0)) + 1
+        # A new admin command starts a fresh idle period and allows the next
+        # waiting notification to be sent after another full 60 seconds.
+        state["idle_sleep_notified"] = False
+
+        if command_text == "/shutdown":
+            state["bot_enabled"] = False
+            state["auto_paused"] = True
+            save_state(state)
+            send_message(
+                chat_id,
+                "🛑 ValoArtsBot выключен: автопубликация остановлена.\n"
+                "Команда /start снова включит бота. GitHub Actions продолжит запускаться по расписанию, "
+                "чтобы бот мог получить команду включения."
+            )
+            stop_auto_publish = True
+            continue
+
+        if command_text in ("/start", "/restart"):
+            was_disabled = not bool(state.get("bot_enabled", True))
+            state["bot_enabled"] = True
+            state["auto_paused"] = False
+            save_state(state)
+            if command_text == "/restart":
+                send_message(
+                    chat_id,
+                    "🔄 Команда перезапуска принята. Бот снова активен; новый цикл автопубликации "
+                    "начнётся сейчас или при следующем запуске GitHub Actions. Состояние и история публикаций сохранены."
+                )
+                stop_auto_publish = True
+            elif was_disabled:
+                send_message(chat_id, "🟢 ValoArtsBot включён. Автопубликация возобновится.")
+            else:
+                send_message(chat_id, "🟢 ValoArtsBot активен.\nИспользуй /help для списка команд.")
+            continue
 
         if command_text in ("/pause", "/resume", "/status"):
             if command_text == "/pause":
@@ -544,22 +597,24 @@ def process_test_commands(state):
                 )
                 stop_auto_publish = True
             elif command_text == "/resume":
+                state["bot_enabled"] = True
                 state["auto_paused"] = False
                 save_state(state)
-                send_message(chat_id, "▶️ Автопубликация возобновлена.")
+                send_message(chat_id, "▶️ Автопубликация возобновлена; бот включён.")
             else:
                 paused = bool(state.get("auto_paused", False))
+                enabled = bool(state.get("bot_enabled", True))
                 current_delay = int(state.get("post_delay", 5))
-                status = "приостановлена" if paused else "включена"
+                status = "выключен" if not enabled else ("приостановлена" if paused else "включена")
                 send_message(
                     chat_id,
-                    f"Статус автопубликации: {status}.\n"
+                    f"Статус бота/автопубликации: {status}.\n"
                     f"Интервал между публикациями: {current_delay} сек."
                 )
             save_state(state)
             continue
 
-        if command_text in ("/help", "/start"):
+        if command_text == "/help":
             help_text = (
                 "📋 Команды ValoArtsBot\n\n"
                 "/help — Показать список команд\n"
@@ -574,6 +629,9 @@ def process_test_commands(state):
                 "/setdelay — Показать текущий интервал\n"
                 "/pause — Приостановить автопубликацию\n"
                 "/resume — Возобновить автопубликацию\n"
+                "/shutdown — Выключить бота (остановить публикации)\n"
+                "/start — Включить бота после выключения\n"
+                "/restart — Перезапустить цикл бота без сброса истории\n"
                 "/status — Показать статус бота\n\n"
                 "🧪 Тестовые команды (публикуют последние доступные файлы):\n"
                 "/testimage — Последняя доступная картинка\n"
@@ -824,9 +882,12 @@ def main():
 
     # Commands are handled before any scheduled publishing.
     stop_requested = process_test_commands(state)
+    if not state.get("bot_enabled", True):
+        state["auto_paused"] = True
+        save_state(state)
     if state.get("auto_paused", False):
         wait_while_paused(state, idle_timeout=60)
-        if state.get("auto_paused", False):
+        if state.get("auto_paused", False) or not state.get("bot_enabled", True):
             return
     elif stop_requested:
         print("Manual publishing command handled; skipping scheduled publishing this run.")
@@ -835,9 +896,12 @@ def main():
     posts = get_posts()
     # The API request can take time; handle commands that arrived while it ran.
     stop_requested = process_test_commands(state)
+    if not state.get("bot_enabled", True):
+        state["auto_paused"] = True
+        save_state(state)
     if state.get("auto_paused", False):
         wait_while_paused(state, idle_timeout=60)
-        if state.get("auto_paused", False):
+        if state.get("auto_paused", False) or not state.get("bot_enabled", True):
             return
     elif stop_requested:
         print("Command handled during API request; skipping scheduled publishing this run.")
@@ -941,13 +1005,16 @@ def main():
         should_stop = sleep_with_command_polling(
             state, max(1, int(state.get("post_delay", 5)))
         )
-        if should_stop or state.get("auto_paused", False):
+        if should_stop or state.get("auto_paused", False) or not state.get("bot_enabled", True):
             print("Stopping automatic publishing because of an administrator command.")
             break
 
-    if state.get("auto_paused", False):
+    if state.get("auto_paused", False) or not state.get("bot_enabled", True):
+        if not state.get("bot_enabled", True):
+            state["auto_paused"] = True
+            save_state(state)
         wait_while_paused(state, idle_timeout=60)
-        if state.get("auto_paused", False):
+        if state.get("auto_paused", False) or not state.get("bot_enabled", True):
             return
         # /resume was received during the paused wait; restart this run so
         # automatic publishing resumes without waiting for the next schedule.
