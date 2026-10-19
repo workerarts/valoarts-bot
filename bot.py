@@ -16,7 +16,7 @@ ADMIN_ID = os.environ.get("TELEGRAM_ADMIN_ID", "").strip()
 
 STATE_FILE = Path("state.json")
 MAX_FILE_BYTES = 50 * 1024 * 1024
-TAGS = "valorant rating:explicit order:id_desc"
+TAGS = "valorant rating:explicit"
 
 SESSION = requests.Session()
 SESSION.headers.update({"User-Agent": "ValoArtsBot/1.0"})
@@ -93,7 +93,7 @@ def get_posts():
             )
 
             if attempt < 4:
-                time.sleep(attempt * 3)
+                time.sleep(attempt * 10)
     else:
         raise RuntimeError(
             f"Не удалось получить данные Rule34 API после 4 попыток: "
@@ -437,6 +437,11 @@ def main():
         f"Run completed. Last processed post ID: "
         f"{state.get('last_post_id')}"
     )
+
+
+if __name__ == "__main__":
+    main()
+
 
 
 if __name__ == "__main__":
