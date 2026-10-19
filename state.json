@@ -1,6 +1,9 @@
 {
   "initialized": true,
   "sent_ids": [
+    "18148926",
+    "18148927",
+    "18150970",
     "18791977",
     "18792502",
     "18792854",
@@ -120,69 +123,8 @@
     "18857273",
     "18857543"
   ],
-  "last_update_id": 506713562,
+  "last_update_id": 506713563,
   "last_post_id": "18857543",
   "post_delay": 3,
-  "pending_updates": [
-    {
-      "update_id": 506713560,
-      "message": {
-        "message_id": 77,
-        "from": {
-          "id": 687259330,
-          "is_bot": false,
-          "first_name": "Nik",
-          "last_name": "⸸",
-          "username": "steep570",
-          "language_code": "ru"
-        },
-        "chat": {
-          "id": 687259330,
-          "first_name": "Nik",
-          "last_name": "⸸",
-          "username": "steep570",
-          "type": "private"
-        },
-        "date": 1792394439,
-        "text": "/help",
-        "entities": [
-          {
-            "offset": 0,
-            "length": 5,
-            "type": "bot_command"
-          }
-        ]
-      }
-    },
-    {
-      "update_id": 506713562,
-      "message": {
-        "message_id": 80,
-        "from": {
-          "id": 687259330,
-          "is_bot": false,
-          "first_name": "Nik",
-          "last_name": "⸸",
-          "username": "steep570",
-          "language_code": "ru"
-        },
-        "chat": {
-          "id": 687259330,
-          "first_name": "Nik",
-          "last_name": "⸸",
-          "username": "steep570",
-          "type": "private"
-        },
-        "date": 1792394490,
-        "text": "/addv1",
-        "entities": [
-          {
-            "offset": 0,
-            "length": 6,
-            "type": "bot_command"
-          }
-        ]
-      }
-    }
-  ]
+  "pending_updates": []
 }
