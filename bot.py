@@ -361,10 +361,10 @@ def process_test_commands(state):
             posts = get_posts()
             sent_ids = set(str(item) for item in state.get("sent_ids", []))
 
-            # /add-команды публикуют только очередь новее watermark, то есть
-            # посты, которые обычный цикл бота ещё не обработал. Если бот ещё
-            # не инициализирован, доступен только самый новый пост — как при
-            # первом обычном запуске.
+            # Ручные /add-команды не зависят от last_post_id:
+            # выбирают старые посты из доступной выборки Rule34, которых
+            # ещё нет в sent_ids. Автоматическая публикация использует watermark
+            # отдельно, ниже в main().
             if command_text in ("/add1", "/add10", "/add50", "/addv1", "/addv10"):
                 stop_auto_publish = True
                 limit = {
@@ -376,16 +376,11 @@ def process_test_commands(state):
                 }[command_text]
                 videos_only = command_text in ("/addv1", "/addv10")
                 supported_extensions = {".jpg", ".jpeg", ".png", ".gif", ".mp4"}
-                last_post_id = state.get("last_post_id")
 
-                if last_post_id is None:
-                    pending = [posts[-1]] if posts and str(posts[-1]["id"]) not in sent_ids else []
-                else:
-                    pending = [
-                        post for post in posts
-                        if int(post["id"]) > int(last_post_id)
-                        and str(post["id"]) not in sent_ids
-                    ]
+                pending = [
+                    post for post in posts
+                    if str(post["id"]) not in sent_ids
+                ]
 
                 candidates = []
                 for post in pending:
@@ -402,7 +397,7 @@ def process_test_commands(state):
                 if not candidates:
                     send_message(
                         chat_id,
-                        "Нет новых неопубликованных подходящих постов в доступной очереди."
+                        "Не найдено подходящих постов, которых ещё нет в sent_ids, в доступной выборке Rule34."
                     )
                     continue
 
@@ -682,7 +677,5 @@ if __name__ == "__main__":
     main()
 
 
-if __name__ == "__main__":
-    main()
 if __name__ == "__main__":
     main()
