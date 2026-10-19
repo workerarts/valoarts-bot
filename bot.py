@@ -264,7 +264,12 @@ def main():
         if post_id in sent_ids:
             continue
 
-        published = publish(post)
+        try:
+            published = publish(post)
+        except Exception as error:
+            print(f"FAILED post {post_id}: {error}")
+            time.sleep(1)
+            continue
 
         # Сохраняем ID, чтобы не обрабатывать
         # публикацию повторно при следующем запуске.
