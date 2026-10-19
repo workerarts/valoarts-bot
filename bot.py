@@ -194,6 +194,81 @@ def send_media(method, field_name, file_data, filename, caption):
         )
 
 
+def _format_name(value):
+    """Turn a Rule34 tag/name into a readable name."""
+    value = str(value or "").strip().replace("_", " ")
+    return " ".join(part[:1].upper() + part[1:] for part in value.split())
+
+
+def _get_characters(raw_tags):
+    """Find every character tag ending in _(valorant), including new agents."""
+    characters = []
+    seen = set()
+    suffix = "_(valorant)"
+
+    for tag in raw_tags:
+        lowered = tag.lower()
+        if lowered.endswith(suffix):
+            name = tag[:-len(suffix)].strip("_ ")
+            key = name.casefold()
+            if name and key not in seen:
+                characters.append(_format_name(name))
+                seen.add(key)
+
+    return characters
+
+
+def _get_artist(post, raw_tags, normalized_tags):
+    """Use explicit artist metadata when available; never guess from random tags."""
+    # Some sources may provide the artist separately from the tags.
+    for field in ("artist", "artist_name", "author", "creator"):
+        value = str(post.get(field, "") or "").strip()
+        if value and value.lower() not in ("none", "unknown", "null"):
+            return _format_name(value)
+
+    # Support explicit artist:username-style tags, if the source provides them.
+    for tag in raw_tags:
+        lowered = tag.lower()
+        if lowered.startswith("artist:"):
+            name = tag.split(":", 1)[1]
+            if name:
+                return _format_name(name)
+
+    # The Rule34 `tags` string usually does not identify which plain tag is the
+    # artist, so guessing from arbitrary tags could incorrectly label a character
+    # or clothing tag as the creator.
+    return None
+
+
+def build_caption(post):
+    """Caption with all detected Valorant agents and artist/AI attribution."""
+    raw_tags = str(post.get("tags", "")).split()
+    normalized_tags = {tag.lower() for tag in raw_tags}
+    characters = _get_characters(raw_tags)
+
+    lines = ['<a href="https://t.me/valorantnsfv">R34 Valorant</a>']
+    if characters:
+        lines.append("Агенты: " + ", ".join(characters))
+
+    ai_tags = {
+        "ai_generated", "ai-generated", "ai_art", "ai_artwork",
+        "generated_by_ai", "made_with_ai",
+    }
+    if normalized_tags.intersection(ai_tags):
+        lines.append("ИИ сгенерировано")
+    else:
+        artist = _get_artist(post, raw_tags, normalized_tags)
+        if artist:
+            lines.append("Автор: " + artist)
+        else:
+            # Do not invent an author when Rule34 only supplies an unclassified
+            # space-separated tag list.
+            lines.append("Автор не указан")
+
+    # Telegram media captions have a 1024-character limit.
+    return "\n".join(lines)[:1024]
+
+
 def publish(post, state=None):
     post_id = str(post["id"])
 
@@ -270,7 +345,7 @@ def publish(post, state=None):
         )
         return False
 
-    caption = '<a href="https://t.me/valorantnsfv">R34 Valorant</a>'
+    caption = build_caption(post)
 
     send_media(
         method,
