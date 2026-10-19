@@ -396,12 +396,11 @@ def build_stats(state):
     )
 
 
-def publish(post, state=None, source="auto"):
+def publish(post, state=None, source="auto", allow_duplicate=False):
     post_id = str(post["id"])
 
-    # Central duplicate guard: every publication path (automatic, /add and
-    # test commands) checks the persistent sent_ids list before sending.
-    if state is not None:
+    # Normal publishing avoids duplicates; /test commands may repost the newest media.
+    if state is not None and not allow_duplicate:
         sent_ids = {str(item) for item in state.get("sent_ids", [])}
         if post_id in sent_ids:
             print(f"SKIP duplicate post: {post_id}")
@@ -484,7 +483,7 @@ def publish(post, state=None, source="auto"):
 
     print(f"PUBLISHED: {post_id} ({method})")
 
-    # Save the ID immediately after Telegram confirms a successful send.
+    # Record successful sends; tests may resend already recorded IDs.
     # This minimizes the chance of reposting if the process stops mid-batch.
     if state is not None:
         sent_ids = {str(item) for item in state.get("sent_ids", [])}
@@ -1085,7 +1084,6 @@ def process_test_commands(state):
                 supported_extensions = {
                     ".jpg", ".jpeg", ".png", ".gif", ".mp4"
                 }
-                sent_ids = {str(item) for item in state.get("sent_ids", [])}
                 candidates = [
                     post
                     for post in reversed(posts)
@@ -1106,10 +1104,9 @@ def process_test_commands(state):
                 notify_start(chat_id, "тестовую публикацию", len(candidates))
 
                 for test_post in candidates:
-                    sent_ids = set(str(item) for item in state.get("sent_ids", []))
                     test_id = str(test_post["id"])
                     try:
-                        published = publish(test_post, state, source="manual")
+                        published = publish(test_post, state, source="manual", allow_duplicate=True)
                         if published is True:
                             successes.append(test_id)
                         elif published is None:
@@ -1144,7 +1141,6 @@ def process_test_commands(state):
 
             if command_text == "/testimage":
                 image_extensions = {".jpg", ".jpeg", ".png"}
-                sent_ids = {str(item) for item in state.get("sent_ids", [])}
                 candidates = [
                     post
                     for post in reversed(posts)
@@ -1160,7 +1156,6 @@ def process_test_commands(state):
             else:
                 extension = ".gif" if command_text == "/testgif" else ".mp4"
                 label = "GIF" if extension == ".gif" else "видео"
-                sent_ids = {str(item) for item in state.get("sent_ids", [])}
                 candidates = [
                     post
                     for post in reversed(posts)
@@ -1178,7 +1173,7 @@ def process_test_commands(state):
             test_post = candidates[0]
             test_id = str(test_post["id"])
             notify_start(chat_id, "тестовую публикацию", 1)
-            published = publish(test_post, state, source="manual")
+            published = publish(test_post, state, source="manual", allow_duplicate=True)
 
             if published is True:
                 send_message(
