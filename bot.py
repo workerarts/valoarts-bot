@@ -29,6 +29,8 @@ def load_state():
             "sent_ids": [],
             "auto_paused": False,
             "bot_enabled": True,
+            "shutdown_once": False,
+            "restart_requested": False,
             "command_activity": 0,
             "idle_sleep_notified": False,
         }
@@ -42,6 +44,8 @@ def load_state():
     # Backward-compatible defaults for new control commands.
     state.setdefault("auto_paused", False)
     state.setdefault("bot_enabled", True)
+    state.setdefault("shutdown_once", False)
+    state.setdefault("restart_requested", False)
     state.setdefault("command_activity", 0)
     state.setdefault("idle_sleep_notified", False)
     return state
@@ -556,34 +560,42 @@ def process_test_commands(state):
         state["idle_sleep_notified"] = False
 
         if command_text == "/shutdown":
+            # One-shot shutdown: stop this workflow run only. The next scheduled
+            # workflow run clears this flag and resumes normal publishing.
+            state["shutdown_once"] = True
             state["bot_enabled"] = False
             state["auto_paused"] = True
+            state["restart_requested"] = False
             save_state(state)
             send_message(
                 chat_id,
-                "🛑 ValoArtsBot выключен: автопубликация остановлена.\n"
-                "Команда /start снова включит бота. GitHub Actions продолжит запускаться по расписанию, "
-                "чтобы бот мог получить команду включения."
+                "🛑 Текущий запуск ValoArtsBot остановлен.\n"
+                "При следующем запуске GitHub Actions по расписанию бот автоматически продолжит работу.\n"
+                "/start не включает бота и не выполняет действий."
             )
             stop_auto_publish = True
             continue
 
-        if command_text in ("/start", "/restart"):
-            was_disabled = not bool(state.get("bot_enabled", True))
+        if command_text == "/start":
+            # Intentionally no start/resume behavior for this command.
+            send_message(
+                chat_id,
+                "ℹ️ Команда /start не имеет функции управления ботом.\n"
+                "Используй /restart для перезапуска текущего рабочего цикла."
+            )
+            continue
+
+        if command_text == "/restart":
             state["bot_enabled"] = True
             state["auto_paused"] = False
+            state["shutdown_once"] = False
+            state["restart_requested"] = True
             save_state(state)
-            if command_text == "/restart":
-                send_message(
-                    chat_id,
-                    "🔄 Команда перезапуска принята. Бот снова активен; новый цикл автопубликации "
-                    "начнётся сейчас или при следующем запуске GitHub Actions. Состояние и история публикаций сохранены."
-                )
-                stop_auto_publish = True
-            elif was_disabled:
-                send_message(chat_id, "🟢 ValoArtsBot включён. Автопубликация возобновится.")
-            else:
-                send_message(chat_id, "🟢 ValoArtsBot активен.\nИспользуй /help для списка команд.")
+            send_message(
+                chat_id,
+                "🔄 Перезапуск принят. Рабочий цикл начнётся заново; история опубликованных постов сохранена."
+            )
+            stop_auto_publish = True
             continue
 
         if command_text in ("/pause", "/resume", "/status"):
@@ -629,9 +641,9 @@ def process_test_commands(state):
                 "/setdelay — Показать текущий интервал\n"
                 "/pause — Приостановить автопубликацию\n"
                 "/resume — Возобновить автопубликацию\n"
-                "/shutdown — Выключить бота (остановить публикации)\n"
-                "/start — Включить бота после выключения\n"
-                "/restart — Перезапустить цикл бота без сброса истории\n"
+                "/shutdown — Остановить текущий запуск; следующий запуск по расписанию продолжит работу\n"
+                "/start — Не имеет функции управления ботом\n"
+                "/restart — Начать рабочий цикл заново без сброса истории\n"
                 "/status — Показать статус бота\n\n"
                 "🧪 Тестовые команды (публикуют последние доступные файлы):\n"
                 "/testimage — Последняя доступная картинка\n"
@@ -733,7 +745,15 @@ def process_test_commands(state):
                     except Exception as error:
                         notify_admin_error(state, f"Ручная публикация поста ID {add_id}", error)
                         failures.append(f"{add_id} (ошибка отправки)")
-                    sleep_with_command_polling(state, max(1, int(state.get("post_delay", 5))))
+                    should_stop = sleep_with_command_polling(
+                        state, max(1, int(state.get("post_delay", 5)))
+                    )
+                    if should_stop and (
+                        state.get("shutdown_once", False)
+                        or state.get("restart_requested", False)
+                        or state.get("auto_paused", False)
+                    ):
+                        break
 
                 summary = (
                     f"Готово. Опубликовано: {len(successes)} из {len(candidates)}; "
@@ -788,7 +808,15 @@ def process_test_commands(state):
                     except Exception as error:
                         notify_admin_error(state, f"Тестовая публикация поста ID {test_id}", error)
                         failures.append(f"{test_id} (ошибка отправки)")
-                    sleep_with_command_polling(state, max(1, int(state.get("post_delay", 5))))
+                    should_stop = sleep_with_command_polling(
+                        state, max(1, int(state.get("post_delay", 5)))
+                    )
+                    if should_stop and (
+                        state.get("shutdown_once", False)
+                        or state.get("restart_requested", False)
+                        or state.get("auto_paused", False)
+                    ):
+                        break
 
                 summary = (
                     f"Тест 10 постов завершён. Успешно: {len(successes)}, "
@@ -880,8 +908,25 @@ def process_test_commands(state):
 def main():
     state = load_state()
 
+    # A /shutdown only stops one workflow run. On the next scheduled run,
+    # clear the one-shot flag and resume automatic publishing automatically.
+    if state.get("shutdown_once", False):
+        state["shutdown_once"] = False
+        state["bot_enabled"] = True
+        state["auto_paused"] = False
+        save_state(state)
+        print("One-shot shutdown cleared; resuming on this scheduled run.")
+
     # Commands are handled before any scheduled publishing.
     stop_requested = process_test_commands(state)
+    if state.get("shutdown_once", False):
+        print("/shutdown requested; ending this workflow run.")
+        return
+    if state.get("restart_requested", False):
+        state["restart_requested"] = False
+        save_state(state)
+        stop_requested = False
+        print("Restart requested; starting a fresh work cycle.")
     if not state.get("bot_enabled", True):
         state["auto_paused"] = True
         save_state(state)
@@ -896,6 +941,15 @@ def main():
     posts = get_posts()
     # The API request can take time; handle commands that arrived while it ran.
     stop_requested = process_test_commands(state)
+    if state.get("shutdown_once", False):
+        print("/shutdown requested during API lookup; ending this workflow run.")
+        return
+    if state.get("restart_requested", False):
+        state["restart_requested"] = False
+        save_state(state)
+        print("Restart requested during API lookup; fetching fresh data.")
+        posts = get_posts()
+        stop_requested = False
     if not state.get("bot_enabled", True):
         state["auto_paused"] = True
         save_state(state)
@@ -1008,6 +1062,16 @@ def main():
         if should_stop or state.get("auto_paused", False) or not state.get("bot_enabled", True):
             print("Stopping automatic publishing because of an administrator command.")
             break
+
+    if state.get("shutdown_once", False):
+        print("/shutdown requested during publishing; ending this workflow run.")
+        return
+
+    if state.get("restart_requested", False):
+        state["restart_requested"] = False
+        save_state(state)
+        print("Restart requested during publishing; starting a fresh work cycle.")
+        return main()
 
     if state.get("auto_paused", False) or not state.get("bot_enabled", True):
         if not state.get("bot_enabled", True):
