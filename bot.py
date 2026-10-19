@@ -368,7 +368,6 @@ def build_stats(state):
         "📊 Статистика ValoArtsBot\n"
         "(время и периоды: UTC)\n\n"
         f"🤖 Статус: {status}\n"
-        f"📚 Учтено старых и новых ID: {len(set(map(str, state.get('sent_ids', []))))}\n"
         f"✅ Успешных публикаций с обновления: {len(records)}\n"
         f"🕐 За 24 часа: {count_24h}\n"
         f"📅 Сегодня: {sum(d == today for d in dates)}\n"
