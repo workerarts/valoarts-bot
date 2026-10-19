@@ -317,6 +317,8 @@ def process_test_commands(state):
             continue
 
         supported_commands = (
+            "/help",
+            "/start",
             "/testgif",
             "/testvideo",
             "/testimage",
@@ -334,6 +336,25 @@ def process_test_commands(state):
 
         if chat.get("type") != "private":
             print("Test command ignored: use a private chat with the bot")
+            continue
+
+        if command_text in ("/help", "/start"):
+            help_text = (
+                "📋 Команды ValoArtsBot\\n\\n"
+                "/help — Показать список команд\\n"
+                "/add1 — Опубликовать 1 старый пост, которого ещё нет в канале\\n"
+                "/add10 — Опубликовать 10 старых постов, которых ещё нет в канале\\n"
+                "/add50 — Опубликовать 50 старых постов, которых ещё нет в канале\\n"
+                "/addv1 — Опубликовать 1 старое видео MP4, которого ещё нет в канале\\n"
+                "/addv10 — Опубликовать 10 старых видео MP4, которых ещё нет в канале\\n\\n"
+                "🧪 Тестовые команды (публикуют последние доступные файлы):\\n"
+                "/testimage — Последняя доступная картинка\\n"
+                "/testgif — Последняя доступная GIF-анимация\\n"
+                "/testvideo — Последнее доступное видео\\n"
+                "/test10 — Последние 10 доступных постов\\n\\n"
+                "Команды доступны только администратору."
+            )
+            send_message(chat_id, help_text)
             continue
 
         try:
@@ -661,5 +682,7 @@ if __name__ == "__main__":
     main()
 
 
+if __name__ == "__main__":
+    main()
 if __name__ == "__main__":
     main()
