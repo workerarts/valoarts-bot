@@ -197,8 +197,15 @@ def publish(post):
         if not content_type.startswith("image/"):
             print(f"SKIP invalid image: {post_id}")
             return False
-        method = "sendPhoto"
-        field_name = "photo"
+
+        # Telegram sendPhoto has a 10 MB limit. Larger images can be sent
+        # as documents (within the bot's document upload limit).
+        if len(file_data) > 10 * 1024 * 1024:
+            method = "sendDocument"
+            field_name = "document"
+        else:
+            method = "sendPhoto"
+            field_name = "photo"
 
     elif extension == ".gif" or content_type == "image/gif":
         if file_data[:6] not in (b"GIF87a", b"GIF89a"):
@@ -437,11 +444,6 @@ def main():
         f"Run completed. Last processed post ID: "
         f"{state.get('last_post_id')}"
     )
-
-
-if __name__ == "__main__":
-    main()
-
 
 
 if __name__ == "__main__":
