@@ -1372,10 +1372,11 @@ def main():
         # Обновляем watermark и для опубликованного поста, и для пропущенного
         # неподдерживаемого/слишком большого файла, чтобы не зациклиться на нём.
         state["last_post_id"] = post_id
-        sent_ids.add(post_id)
-        state["sent_ids"] = sorted(
-            sent_ids, key=lambda value: int(value)
-        )
+        # Only successful sends belong in sent_ids; skipped media must not
+        # masquerade as successfully published artwork.
+        if published is True:
+            sent_ids.add(post_id)
+        state["sent_ids"] = sorted(sent_ids, key=lambda value: int(value))
         state["initialized"] = True
         save_state(state)
 
