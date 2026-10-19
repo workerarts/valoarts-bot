@@ -63,7 +63,7 @@ def save_state(state):
     temporary.replace(STATE_FILE)
 
 
-def get_posts(search_tags=TAGS, post_id=None):
+def get_posts(search_tags=TAGS, post_id=None, page=0):
     # Rule34 иногда возвращает пустой ответ даже при HTTP 200.
     # Повторяем запрос несколько раз, прежде чем считать запуск неудачным.
     last_error = None
@@ -78,7 +78,7 @@ def get_posts(search_tags=TAGS, post_id=None):
                     "q": "index",
                     "json": "1",
                     "limit": "1000",
-                    "pid": "0",
+                    "pid": str(page),
                     "tags": search_tags if post_id is None else None,
                     "id": post_id,
                     "api_key": RULE34_API_KEY,
@@ -166,6 +166,44 @@ def get_posts(search_tags=TAGS, post_id=None):
         results.append(post)
 
     return sorted(results, key=lambda post: int(post["id"]))
+
+
+
+def get_posts_after(last_post_id, max_pages=100):
+    """Read Rule34 pages newest-first until the saved cursor is reached.
+
+    Never advance the cursor on an incomplete API lookup. Pages are queried
+    sequentially; the existing automatic publisher still handles ordering,
+    duplicate detection, and state persistence after each post.
+    """
+    collected = {}
+    previous_page_ids = None
+    for page in range(max_pages):
+        page_posts = get_posts(page=page)
+        if not page_posts:
+            # Empty pages may indicate API trouble; only treat an empty page
+            # as the end after at least one successful non-empty page.
+            if page == 0:
+                raise RuntimeError("Rule34 вернул пустую первую страницу")
+            print(f"Rule34 pagination finished at page {page} (empty page).")
+            break
+        page_ids = tuple(sorted(int(p["id"]) for p in page_posts))
+        if page_ids == previous_page_ids:
+            raise RuntimeError(f"Rule34 repeated page {page}; stopping to avoid skipping posts")
+        previous_page_ids = page_ids
+        for post in page_posts:
+            if int(post["id"]) > last_post_id:
+                collected[str(post["id"])] = post
+        if min(page_ids) <= last_post_id:
+            print(f"Reached saved cursor {last_post_id} on page {page}.")
+            break
+        print(f"Page {page}: {len(page_posts)} posts; continuing backwards to {last_post_id}.")
+    else:
+        raise RuntimeError(
+            f"Reached the {max_pages}-page safety limit without finding ID "
+            f"{last_post_id}. No cursor was advanced."
+        )
+    return sorted(collected.values(), key=lambda post: int(post["id"]))
 
 
 def send_media(method, field_name, file_data, filename, caption):
@@ -1261,7 +1299,8 @@ def main():
         print("A control command requested stopping scheduled publishing this run.")
         return
 
-    posts = get_posts()
+    posts = (get_posts_after(int(state["last_post_id"]))
+             if state.get("last_post_id") is not None else get_posts())
     # The API request can take time; handle commands that arrived while it ran.
     stop_requested = process_test_commands(state)
     if state.get("shutdown_once", False):
@@ -1271,7 +1310,8 @@ def main():
         state["restart_requested"] = False
         save_state(state)
         print("Restart requested during API lookup; fetching fresh data.")
-        posts = get_posts()
+        posts = (get_posts_after(int(state["last_post_id"]))
+                 if state.get("last_post_id") is not None else get_posts())
         stop_requested = False
     if not state.get("bot_enabled", True):
         state["auto_paused"] = True
