@@ -200,30 +200,28 @@ def _format_name(value):
     return " ".join(part[:1].upper() + part[1:] for part in value.split())
 
 
-_get_characters(raw_tags)
+def _get_characters(raw_tags):
+    """Find every character tag ending in _(valorant), including new agents."""
+    characters = []
+    seen = set()
+    suffix = "_(valorant)"
 
-
-def _get_artist(post, raw_tags, normalized_tags):
-    """Use explicit artist metadata when available; never guess from random tags."""
-    # Some sources may provide the artist separately from the tags.
-    for field in ("artist", "artist_name", "author", "creator"):
-        value = str(post.get(field, "") or "").strip()
-        if value and value.lower() not in ("none", "unknown", "null"):
-            return _format_name(value)
-
-    # Support explicit artist:username-style tags, if the source provides them.
     for tag in raw_tags:
         lowered = tag.lower()
-        if lowered.startswith("artist:"):
-            name = tag.split(":", 1)[1]
-            if name:
-                return _format_name(name)
+        if lowered.endswith(suffix):
+            name = tag[:-len(suffix)].strip("_ ")
+            key = name.casefold()
+            if name and key not in seen:
+                characters.append(_format_name(name))
+                seen.add(key)
+        elif lowered in {"hush", "hush_valorant"}:
+            # Hush is the newly revealed VALORANT agent; some sources may
+            # provide the plain tag before the canonical _(valorant) tag exists.
+            if "hush" not in seen:
+                characters.append("Hush")
+                seen.add("hush")
 
-    # The Rule34 `tags` string usually does not identify which plain tag is the
-    # artist, so guessing from arbitrary tags could incorrectly label a character
-    # or clothing tag as the creator.
-    return None
-
+    return characters
 
 def _hashtag(value):
     """Format a name as a lowercase Telegram hashtag."""
