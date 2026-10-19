@@ -2041,10 +2041,11 @@
     "19094553",
     "19094556",
     "19094559",
-    "19094589"
+    "19094589",
+    "19094735"
   ],
-  "last_post_id": 19094589,
-  "last_publication_at": "2026-10-19T17:34:37.720754+00:00",
+  "last_post_id": 19094735,
+  "last_publication_at": "2026-10-19T18:09:13.715543+00:00",
   "last_notified_error": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
   "auto_paused": false,
   "bot_enabled": true,
@@ -22595,9 +22596,17 @@
       "agents": [
         "neon"
       ]
+    },
+    {
+      "id": "19094735",
+      "at": "2026-10-19T18:09:13.715543+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": []
     }
   ],
-  "last_published_id": "19094589",
+  "last_published_id": "19094735",
   "last_update_id": 506713660,
   "post_delay": 1,
   "publication_errors": [
