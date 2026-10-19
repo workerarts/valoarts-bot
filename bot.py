@@ -57,7 +57,6 @@ params={
     "api_key": RULE34_API_KEY,
     "user_id": RULE34_USER_ID,
     "order": "id_desc",
-}
         },
         timeout=40,
     )
