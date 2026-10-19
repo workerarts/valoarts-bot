@@ -36,7 +36,7 @@ jobs:
 
       - name: Run bot
         env:
-          VALOARTS_MAX_RUN_SECONDS: "720"
+          VALOARTS_MAX_RUN_SECONDS: "840"
           TELEGRAM_ADMIN_ID: ${{ secrets.TELEGRAM_ADMIN_ID }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
