@@ -46,19 +46,18 @@ def save_state(state):
     temporary.replace(STATE_FILE)
 
 
-def get_posts():
-    response = SESSION.get(
-        API_URL,
-        params={
-            "page": "dapi",
-            "s": "post",
-            "q": "index",
-            "json": "1",
-            "limit": "1000",
-            "pid": "0",
-            "tags": TAGS,
-            "api_key": RULE34_API_KEY,
-            "user_id": RULE34_USER_ID,
+params={
+    "page": "dapi",
+    "s": "post",
+    "q": "index",
+    "json": "1",
+    "limit": "100",
+    "pid": "0",
+    "tags": TAGS,
+    "api_key": RULE34_API_KEY,
+    "user_id": RULE34_USER_ID,
+    "order": "id_desc",
+}
         },
         timeout=40,
     )
