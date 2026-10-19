@@ -215,5 +215,7 @@
   "last_post_id": "18895299",
   "post_delay": 3,
   "auto_paused": true,
-  "command_activity": 2
+  "command_activity": 2,
+  "bot_enabled": true,
+  "idle_sleep_notified": true
 }
