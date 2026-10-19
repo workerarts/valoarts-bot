@@ -274,6 +274,7 @@ def send_message(chat_id, message_text):
 
 
 def process_test_commands(state):
+    stop_auto_publish = False
     if not ADMIN_ID:
         print("Test commands disabled: TELEGRAM_ADMIN_ID is missing")
         return
@@ -320,6 +321,11 @@ def process_test_commands(state):
             "/testvideo",
             "/testimage",
             "/test10",
+            "/add1",
+            "/add10",
+            "/add50",
+            "/addV1",
+            "/addV10",
         )
         if command_text not in supported_commands:
             continue
@@ -333,6 +339,88 @@ def process_test_commands(state):
         try:
             posts = get_posts()
             sent_ids = set(str(item) for item in state.get("sent_ids", []))
+
+            # /add-команды публикуют только очередь новее watermark, то есть
+            # посты, которые обычный цикл бота ещё не обработал. Если бот ещё
+            # не инициализирован, доступен только самый новый пост — как при
+            # первом обычном запуске.
+            if command_text in ("/add1", "/add10", "/add50", "/addV1", "/addV10"):
+                stop_auto_publish = True
+                limit = {
+                    "/add1": 1,
+                    "/add10": 10,
+                    "/add50": 50,
+                    "/addV1": 1,
+                    "/addV10": 10,
+                }[command_text]
+                videos_only = command_text in ("/addV1", "/addV10")
+                supported_extensions = {".jpg", ".jpeg", ".png", ".gif", ".mp4"}
+                last_post_id = state.get("last_post_id")
+
+                if last_post_id is None:
+                    pending = [posts[-1]] if posts and str(posts[-1]["id"]) not in sent_ids else []
+                else:
+                    pending = [
+                        post for post in posts
+                        if int(post["id"]) > int(last_post_id)
+                        and str(post["id"]) not in sent_ids
+                    ]
+
+                candidates = []
+                for post in pending:
+                    extension = Path(urlparse(post["file_url"]).path).suffix.lower()
+                    if extension not in supported_extensions:
+                        continue
+                    if videos_only and extension != ".mp4":
+                        continue
+                    candidates.append(post)
+
+                candidates.sort(key=lambda post: int(post["id"]))
+                candidates = candidates[:limit]
+
+                if not candidates:
+                    send_message(
+                        chat_id,
+                        "Нет новых неопубликованных подходящих постов в доступной очереди."
+                    )
+                    continue
+
+                label = "видео" if videos_only else "медиа"
+                send_message(
+                    chat_id,
+                    f"Начинаю публикацию: {len(candidates)} {label}."
+                )
+                successes = []
+                failures = []
+
+                for add_post in candidates:
+                    add_id = str(add_post["id"])
+                    try:
+                        published = publish(add_post)
+                        if published:
+                            successes.append(add_id)
+                            sent_ids.add(add_id)
+                            state["sent_ids"] = sorted(
+                                sent_ids, key=lambda value: int(value)
+                            )
+                            save_state(state)
+                        else:
+                            failures.append(f"{add_id} (формат пропущен)")
+                    except Exception as error:
+                        print(f"Add post {add_id} failed: {error}")
+                        failures.append(f"{add_id} (ошибка отправки)")
+                    time.sleep(1)
+
+                summary = (
+                    f"Готово. Опубликовано: {len(successes)} из {len(candidates)}; "
+                    f"ошибок/пропусков: {len(failures)}."
+                )
+                if successes:
+                    summary += "\nID публикаций: " + ", ".join(successes)
+                if failures:
+                    summary += "\nНе удалось: " + ", ".join(failures)
+                send_message(chat_id, summary)
+                continue
 
             if command_text == "/test10":
                 supported_extensions = {
@@ -454,13 +542,18 @@ def process_test_commands(state):
             save_state(state)
 
     save_state(state)
+    return stop_auto_publish
 
 
 def main():
     state = load_state()
 
     # Проверяем команды администратора перед обработкой новых публикаций.
-    process_test_commands(state)
+    # Если была команда /add, в этом запуске не запускаем автопубликацию,
+    # иначе бот мог бы выложить больше постов, чем запросил администратор.
+    if process_test_commands(state):
+        print("Manual /add command handled; skipping scheduled publishing this run.")
+        return
 
     posts = get_posts()
     if not posts:
