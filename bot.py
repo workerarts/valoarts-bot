@@ -240,33 +240,79 @@ def _get_artist(post, raw_tags, normalized_tags):
     return None
 
 
+def _hashtag(value):
+    """Format a name as a lowercase Telegram hashtag."""
+    result = []
+    previous_underscore = False
+    for char in str(value or "").strip().lower():
+        if char.isalnum():
+            result.append(char)
+            previous_underscore = False
+        elif char in " _-":
+            if result and not previous_underscore:
+                result.append("_")
+                previous_underscore = True
+    return "".join(result).strip("_")
+
+
 def build_caption(post):
-    """Caption with all detected Valorant agents and artist/AI attribution."""
+    """Caption format: hashtags first, then the channel name on its own line."""
     raw_tags = str(post.get("tags", "")).split()
     normalized_tags = {tag.lower() for tag in raw_tags}
     characters = _get_characters(raw_tags)
+    hashtags = []
+    seen = set()
 
-    lines = ['<a href="https://t.me/valorantnsfv">R34 Valorant</a>']
-    if characters:
-        lines.append("Агенты: " + ", ".join(characters))
+    # Include every recognized Valorant character, in lowercase hashtag form.
+    for character in characters:
+        tag = _hashtag(character)
+        if tag and tag not in seen:
+            hashtags.append("#" + tag)
+            seen.add(tag)
 
     ai_tags = {
         "ai_generated", "ai-generated", "ai_art", "ai_artwork",
         "generated_by_ai", "made_with_ai",
     }
     if normalized_tags.intersection(ai_tags):
-        lines.append("ИИ сгенерировано")
+        if "ai_generated" not in seen:
+            hashtags.append("#ai_generated")
+            seen.add("ai_generated")
     else:
         artist = _get_artist(post, raw_tags, normalized_tags)
         if artist:
-            lines.append("Автор: " + artist)
-        else:
-            # Do not invent an author when Rule34 only supplies an unclassified
-            # space-separated tag list.
-            lines.append("Автор не указан")
+            artist_tag = _hashtag(artist)
+            if artist_tag and artist_tag not in seen:
+                hashtags.append("#" + artist_tag)
+                seen.add(artist_tag)
 
+    # Add a media hashtag only for animated formats; ordinary photos get none.
+    file_url = str(post.get("file_url", "") or "")
+    extension = Path(urlparse(file_url).path).suffix.lower()
+    media_tag = "gif" if extension == ".gif" else (
+        "video" if extension == ".mp4" else None
+    )
+    if media_tag and media_tag not in seen:
+        hashtags.append("#" + media_tag)
+        seen.add(media_tag)
+
+    # Mark cosplay only when the source tags explicitly indicate cosplay.
+    is_cosplay = any(
+        tag == "cosplay"
+        or tag.startswith("cosplay_")
+        or tag.endswith("_cosplay")
+        or tag == "cosplayer"
+        for tag in normalized_tags
+    )
+    if is_cosplay and "cosplay" not in seen:
+        hashtags.append("#cosplay")
+        seen.add("cosplay")
+
+    # The channel label is always the final line; no descriptive labels are used.
+    channel_line = '<a href="https://t.me/valorantnsfv">R34 Valorant</a>'
+    caption = (" ".join(hashtags) + "\n" if hashtags else "") + channel_line
     # Telegram media captions have a 1024-character limit.
-    return "\n".join(lines)[:1024]
+    return caption[:1024]
 
 
 def publish(post, state=None):
