@@ -1089,8 +1089,7 @@ def process_test_commands(state):
                 candidates = [
                     post
                     for post in reversed(posts)
-                    if str(post["id"]) not in sent_ids
-                    and Path(urlparse(post["file_url"]).path).suffix.lower()
+                    if Path(urlparse(post["file_url"]).path).suffix.lower()
                     in supported_extensions
                 ][:10]
 
@@ -1115,6 +1114,7 @@ def process_test_commands(state):
                             successes.append(test_id)
                         elif published is None:
                             print(f"Test post {test_id} skipped: already published")
+                            failures.append(f"{test_id} (уже опубликован)")
                         else:
                             failures.append(f"{test_id} (формат пропущен)")
                     except Exception as error:
@@ -1148,8 +1148,7 @@ def process_test_commands(state):
                 candidates = [
                     post
                     for post in reversed(posts)
-                    if str(post["id"]) not in sent_ids
-                    and (
+                    if (
                         Path(urlparse(post["file_url"]).path).suffix.lower()
                         in image_extensions
                         or Path(
@@ -1165,8 +1164,7 @@ def process_test_commands(state):
                 candidates = [
                     post
                     for post in reversed(posts)
-                    if str(post["id"]) not in sent_ids
-                    and Path(urlparse(post["file_url"]).path).suffix.lower()
+                    if Path(urlparse(post["file_url"]).path).suffix.lower()
                     == extension
                 ]
 
