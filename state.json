@@ -204,9 +204,14 @@
     "18891880",
     "18892547",
     "18892611",
+    "18892865",
+    "18893087",
+    "18893149",
     "19089683"
   ],
   "last_update_id": 506713579,
-  "last_post_id": "18892611",
-  "post_delay": 3
+  "last_post_id": "18893149",
+  "post_delay": 3,
+  "auto_paused": false,
+  "command_activity": 0
 }
