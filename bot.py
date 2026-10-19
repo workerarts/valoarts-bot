@@ -133,6 +133,7 @@ def get_posts():
     return sorted(results, key=lambda p: int(p["id"]))
 
 
+
 def send_media(method, field_name, file_data, filename, caption):
     response = SESSION.post(
         f"https://api.telegram.org/bot{BOT_TOKEN}/{method}",
@@ -147,12 +148,19 @@ def send_media(method, field_name, file_data, filename, caption):
         timeout=90,
     )
 
-    response.raise_for_status()
-    result = response.json()
+    try:
+        result = response.json()
+    except ValueError:
+        response.raise_for_status()
+        raise RuntimeError("Telegram вернул некорректный ответ")
 
-    if not result.get("ok"):
+    if not response.ok or not result.get("ok"):
+        description = result.get(
+            "description", "Неизвестная ошибка Telegram"
+        )
         raise RuntimeError(
-            f"Telegram API error: {result}"
+            f"Telegram error {response.status_code}, "
+            f"method={method}, file={filename}: {description}"
         )
 
 
