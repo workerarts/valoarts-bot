@@ -240,16 +240,122 @@
     "16676555",
     "16679559",
     "16687239",
-    "16688527"
+    "16688527",
+    "16692657",
+    "16696543",
+    "16696580",
+    "16698516",
+    "16698536",
+    "16698550",
+    "16698564",
+    "16698579",
+    "16698605",
+    "16706945",
+    "16712163",
+    "16714156",
+    "16714170",
+    "16714190",
+    "16718096",
+    "16722054",
+    "16722079",
+    "16732609",
+    "16735153",
+    "16735414",
+    "16735417",
+    "16735422",
+    "16735424",
+    "16735425",
+    "16744852",
+    "16744875",
+    "16748803",
+    "16748813",
+    "16750479",
+    "16750492",
+    "16750526",
+    "16750534",
+    "16753025",
+    "16758295",
+    "16763377",
+    "16763455",
+    "16763510",
+    "16763532",
+    "16763590",
+    "16763630",
+    "16763643",
+    "16763665",
+    "16763683",
+    "16763695",
+    "16770606",
+    "16770756",
+    "16770787",
+    "16773350",
+    "16774227",
+    "16774229",
+    "16774230",
+    "16774233",
+    "16774234",
+    "16774618",
+    "16774627",
+    "16774632",
+    "16774635",
+    "16774641",
+    "16774645",
+    "16775611",
+    "16785790",
+    "16785795",
+    "16785799",
+    "16785806",
+    "16785807",
+    "16785812",
+    "16787712",
+    "16791487",
+    "16794242",
+    "16794243",
+    "16808700",
+    "16809891",
+    "16811614",
+    "16811616",
+    "16811621",
+    "16811623",
+    "16811625",
+    "16811627",
+    "16816555",
+    "16822487",
+    "16822739",
+    "16832463",
+    "16845060",
+    "16847099",
+    "16847100",
+    "16847103",
+    "16847108",
+    "16847111",
+    "16847113",
+    "16848119",
+    "16848235",
+    "16848273",
+    "16848334",
+    "16850395",
+    "16850554",
+    "16853615",
+    "16853726",
+    "16854053",
+    "16854439",
+    "16857392",
+    "16857393",
+    "16857395",
+    "16857398",
+    "16857399",
+    "16857403",
+    "16859402"
   ],
-  "last_post_id": 16688527,
-  "last_publication_at": "2026-10-19T11:43:13.959252+00:00",
+  "last_post_id": 16859402,
+  "last_publication_at": "2026-10-19T12:01:43.175067+00:00",
   "last_notified_error": null,
   "auto_paused": false,
   "bot_enabled": true,
   "shutdown_once": false,
   "restart_requested": false,
-  "command_activity": 9,
+  "command_activity": 10,
   "idle_sleep_notified": false,
   "publication_stats": [
     {
@@ -2660,11 +2766,1108 @@
       "agents": [
         "viper"
       ]
+    },
+    {
+      "id": "16692657",
+      "at": "2026-10-19T11:46:49.836553+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "16696543",
+      "at": "2026-10-19T11:46:51.638702+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "fade",
+        "neon"
+      ]
+    },
+    {
+      "id": "16696580",
+      "at": "2026-10-19T11:46:56.426070+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "fade",
+        "neon"
+      ]
+    },
+    {
+      "id": "16698516",
+      "at": "2026-10-19T11:46:58.197528+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "viper"
+      ]
+    },
+    {
+      "id": "16698536",
+      "at": "2026-10-19T11:47:03.230076+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "viper"
+      ]
+    },
+    {
+      "id": "16698550",
+      "at": "2026-10-19T11:47:10.589604+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "viper"
+      ]
+    },
+    {
+      "id": "16698564",
+      "at": "2026-10-19T11:47:17.799722+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "viper"
+      ]
+    },
+    {
+      "id": "16698579",
+      "at": "2026-10-19T11:47:27.972794+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "viper"
+      ]
+    },
+    {
+      "id": "16698605",
+      "at": "2026-10-19T11:47:35.093350+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "viper"
+      ]
+    },
+    {
+      "id": "16706945",
+      "at": "2026-10-19T11:47:45.581604+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "killjoy"
+      ]
+    },
+    {
+      "id": "16712163",
+      "at": "2026-10-19T11:47:52.415530+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "reyna",
+        "sage"
+      ]
+    },
+    {
+      "id": "16714156",
+      "at": "2026-10-19T11:48:02.384933+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "harbor",
+        "yoru"
+      ]
+    },
+    {
+      "id": "16714170",
+      "at": "2026-10-19T11:48:09.346055+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "harbor",
+        "yoru"
+      ]
+    },
+    {
+      "id": "16714190",
+      "at": "2026-10-19T11:48:19.272674+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "harbor",
+        "yoru"
+      ]
+    },
+    {
+      "id": "16718096",
+      "at": "2026-10-19T11:48:26.394061+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "16722054",
+      "at": "2026-10-19T11:48:36.318200+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "16722079",
+      "at": "2026-10-19T11:48:43.188258+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "16732609",
+      "at": "2026-10-19T11:48:53.057259+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "clove"
+      ]
+    },
+    {
+      "id": "16735153",
+      "at": "2026-10-19T11:49:00.210134+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "jett"
+      ]
+    },
+    {
+      "id": "16735414",
+      "at": "2026-10-19T11:49:10.623824+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "16735417",
+      "at": "2026-10-19T11:49:17.637316+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "16735422",
+      "at": "2026-10-19T11:49:28.299167+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "16735424",
+      "at": "2026-10-19T11:49:35.410328+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "16735425",
+      "at": "2026-10-19T11:49:45.532054+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "16744852",
+      "at": "2026-10-19T11:49:52.453470+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "16744875",
+      "at": "2026-10-19T11:50:02.557227+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "16748803",
+      "at": "2026-10-19T11:50:09.533777+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "viper"
+      ]
+    },
+    {
+      "id": "16748813",
+      "at": "2026-10-19T11:50:19.761788+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "viper"
+      ]
+    },
+    {
+      "id": "16750479",
+      "at": "2026-10-19T11:50:26.885704+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "reyna",
+        "sage",
+        "viper"
+      ]
+    },
+    {
+      "id": "16750492",
+      "at": "2026-10-19T11:50:36.988317+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "reyna",
+        "sage",
+        "viper"
+      ]
+    },
+    {
+      "id": "16750526",
+      "at": "2026-10-19T11:50:44.013628+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "reyna",
+        "sage",
+        "viper"
+      ]
+    },
+    {
+      "id": "16750534",
+      "at": "2026-10-19T11:50:54.176940+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "reyna",
+        "sage",
+        "viper"
+      ]
+    },
+    {
+      "id": "16753025",
+      "at": "2026-10-19T11:51:01.244369+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "reyna",
+        "sage"
+      ]
+    },
+    {
+      "id": "16758295",
+      "at": "2026-10-19T11:51:11.363372+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "clove"
+      ]
+    },
+    {
+      "id": "16763377",
+      "at": "2026-10-19T11:51:18.311669+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "astra",
+        "sage"
+      ]
+    },
+    {
+      "id": "16763455",
+      "at": "2026-10-19T11:51:28.212905+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "killjoy",
+        "raze"
+      ]
+    },
+    {
+      "id": "16763510",
+      "at": "2026-10-19T11:51:35.321837+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "neon",
+        "sage"
+      ]
+    },
+    {
+      "id": "16763532",
+      "at": "2026-10-19T11:51:45.333547+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "astra",
+        "jett",
+        "skye"
+      ]
+    },
+    {
+      "id": "16763590",
+      "at": "2026-10-19T11:51:52.395364+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "neon",
+        "sage"
+      ]
+    },
+    {
+      "id": "16763630",
+      "at": "2026-10-19T11:52:02.295380+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "clove",
+        "jett",
+        "killjoy",
+        "raze"
+      ]
+    },
+    {
+      "id": "16763643",
+      "at": "2026-10-19T11:52:09.735941+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "reyna",
+        "sage"
+      ]
+    },
+    {
+      "id": "16763665",
+      "at": "2026-10-19T11:52:19.871524+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "16763683",
+      "at": "2026-10-19T11:52:26.985264+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "reyna",
+        "sage"
+      ]
+    },
+    {
+      "id": "16763695",
+      "at": "2026-10-19T11:52:36.965822+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "killjoy",
+        "raze"
+      ]
+    },
+    {
+      "id": "16770606",
+      "at": "2026-10-19T11:52:43.918406+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "skye"
+      ]
+    },
+    {
+      "id": "16770756",
+      "at": "2026-10-19T11:52:54.039356+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "astra"
+      ]
+    },
+    {
+      "id": "16770787",
+      "at": "2026-10-19T11:53:01.110101+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "chamber",
+        "viper"
+      ]
+    },
+    {
+      "id": "16773350",
+      "at": "2026-10-19T11:53:11.134123+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "killjoy",
+        "sage"
+      ]
+    },
+    {
+      "id": "16774227",
+      "at": "2026-10-19T11:53:18.283818+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "deadlock"
+      ]
+    },
+    {
+      "id": "16774229",
+      "at": "2026-10-19T11:53:28.576217+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "deadlock"
+      ]
+    },
+    {
+      "id": "16774230",
+      "at": "2026-10-19T11:53:35.826747+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "deadlock"
+      ]
+    },
+    {
+      "id": "16774233",
+      "at": "2026-10-19T11:53:46.081806+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "deadlock"
+      ]
+    },
+    {
+      "id": "16774234",
+      "at": "2026-10-19T11:53:53.159765+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "deadlock"
+      ]
+    },
+    {
+      "id": "16774618",
+      "at": "2026-10-19T11:54:03.281018+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "clove"
+      ]
+    },
+    {
+      "id": "16774627",
+      "at": "2026-10-19T11:54:10.384615+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "clove"
+      ]
+    },
+    {
+      "id": "16774632",
+      "at": "2026-10-19T11:54:20.452752+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "clove"
+      ]
+    },
+    {
+      "id": "16774635",
+      "at": "2026-10-19T11:54:27.526898+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "clove"
+      ]
+    },
+    {
+      "id": "16774641",
+      "at": "2026-10-19T11:54:37.694298+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "clove"
+      ]
+    },
+    {
+      "id": "16774645",
+      "at": "2026-10-19T11:54:44.700028+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "clove"
+      ]
+    },
+    {
+      "id": "16775611",
+      "at": "2026-10-19T11:54:54.709977+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "16785790",
+      "at": "2026-10-19T11:55:01.820838+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "16785795",
+      "at": "2026-10-19T11:55:12.273726+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "16785799",
+      "at": "2026-10-19T11:55:19.420224+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "16785806",
+      "at": "2026-10-19T11:55:29.667293+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "16785807",
+      "at": "2026-10-19T11:55:37.215387+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "16785812",
+      "at": "2026-10-19T11:55:47.204938+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "16787712",
+      "at": "2026-10-19T11:55:54.778829+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": []
+    },
+    {
+      "id": "16791487",
+      "at": "2026-10-19T11:56:04.830485+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "evori_dreamwings",
+        "lunari"
+      ]
+    },
+    {
+      "id": "16794242",
+      "at": "2026-10-19T11:56:11.687600+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "clove",
+        "reyna"
+      ]
+    },
+    {
+      "id": "16794243",
+      "at": "2026-10-19T11:56:21.605242+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "clove",
+        "reyna"
+      ]
+    },
+    {
+      "id": "16808700",
+      "at": "2026-10-19T11:56:38.316465+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "brimstone",
+        "gekko"
+      ]
+    },
+    {
+      "id": "16809891",
+      "at": "2026-10-19T11:56:48.316127+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "viper"
+      ]
+    },
+    {
+      "id": "16811614",
+      "at": "2026-10-19T11:56:55.391111+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "jett"
+      ]
+    },
+    {
+      "id": "16811616",
+      "at": "2026-10-19T11:57:05.987378+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "jett"
+      ]
+    },
+    {
+      "id": "16811621",
+      "at": "2026-10-19T11:57:13.057404+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "jett"
+      ]
+    },
+    {
+      "id": "16811623",
+      "at": "2026-10-19T11:57:23.174123+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "jett"
+      ]
+    },
+    {
+      "id": "16811625",
+      "at": "2026-10-19T11:57:30.305345+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "jett"
+      ]
+    },
+    {
+      "id": "16811627",
+      "at": "2026-10-19T11:57:40.881206+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "jett"
+      ]
+    },
+    {
+      "id": "16816555",
+      "at": "2026-10-19T11:57:48.141950+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "viper"
+      ]
+    },
+    {
+      "id": "16822487",
+      "at": "2026-10-19T11:57:58.162824+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "reyna"
+      ]
+    },
+    {
+      "id": "16822739",
+      "at": "2026-10-19T11:58:05.138513+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "reyna"
+      ]
+    },
+    {
+      "id": "16832463",
+      "at": "2026-10-19T11:58:15.181363+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "killjoy"
+      ]
+    },
+    {
+      "id": "16845060",
+      "at": "2026-10-19T11:58:22.341663+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "reyna"
+      ]
+    },
+    {
+      "id": "16847099",
+      "at": "2026-10-19T11:58:32.342012+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "reyna"
+      ]
+    },
+    {
+      "id": "16847100",
+      "at": "2026-10-19T11:58:39.254833+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "reyna"
+      ]
+    },
+    {
+      "id": "16847103",
+      "at": "2026-10-19T11:58:49.219681+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "reyna"
+      ]
+    },
+    {
+      "id": "16847108",
+      "at": "2026-10-19T11:58:56.220665+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "reyna"
+      ]
+    },
+    {
+      "id": "16847111",
+      "at": "2026-10-19T11:59:06.214826+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "reyna"
+      ]
+    },
+    {
+      "id": "16847113",
+      "at": "2026-10-19T11:59:13.266354+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "reyna"
+      ]
+    },
+    {
+      "id": "16848119",
+      "at": "2026-10-19T11:59:23.256785+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "reyna",
+        "viper"
+      ]
+    },
+    {
+      "id": "16848235",
+      "at": "2026-10-19T11:59:30.119768+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "reyna",
+        "viper"
+      ]
+    },
+    {
+      "id": "16848273",
+      "at": "2026-10-19T11:59:40.104567+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "reyna",
+        "viper"
+      ]
+    },
+    {
+      "id": "16848334",
+      "at": "2026-10-19T11:59:47.124817+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "reyna",
+        "viper"
+      ]
+    },
+    {
+      "id": "16850395",
+      "at": "2026-10-19T11:59:59.295496+00:00",
+      "source": "auto",
+      "type": "video",
+      "art": "original",
+      "agents": [
+        "reyna",
+        "viper"
+      ]
+    },
+    {
+      "id": "16850554",
+      "at": "2026-10-19T12:00:06.283656+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "chamber",
+        "viper"
+      ]
+    },
+    {
+      "id": "16853615",
+      "at": "2026-10-19T12:00:16.434142+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "viper"
+      ]
+    },
+    {
+      "id": "16853726",
+      "at": "2026-10-19T12:00:23.513150+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "16854053",
+      "at": "2026-10-19T12:00:33.641266+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "reyna"
+      ]
+    },
+    {
+      "id": "16854439",
+      "at": "2026-10-19T12:00:40.785874+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "16857392",
+      "at": "2026-10-19T12:00:50.941340+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "16857393",
+      "at": "2026-10-19T12:00:58.064352+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "16857395",
+      "at": "2026-10-19T12:01:08.216933+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "16857398",
+      "at": "2026-10-19T12:01:15.331576+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "16857399",
+      "at": "2026-10-19T12:01:25.411549+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "16857403",
+      "at": "2026-10-19T12:01:32.548411+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "16859402",
+      "at": "2026-10-19T12:01:43.175067+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "reyna"
+      ]
     }
   ],
-  "last_published_id": "16688527",
-  "last_update_id": 506713643,
-  "post_delay": 1,
+  "last_published_id": "16859402",
+  "last_update_id": 506713644,
+  "post_delay": 3,
   "publication_errors": [],
   "stats_reset_at": "2026-10-19T11:28:07.753312+00:00"
 }
