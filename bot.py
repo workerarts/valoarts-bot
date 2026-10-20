@@ -32,6 +32,10 @@ def run_deadline_reached():
     return time.monotonic() - RUN_STARTED_AT >= MAX_RUN_SECONDS
 
 
+# Counts actual successful sends in this Python process, including manual/test sends.
+RUN_PUBLICATIONS = Counter()
+RUN_NOTIFICATIONS_STARTED = False
+
 SESSION = requests.Session()
 SESSION.headers.update({"User-Agent": "ValoArtsBot/1.0"})
 
@@ -85,6 +89,7 @@ def load_state():
             "restart_requested": False,
             "command_activity": 0,
             "idle_sleep_notified": False,
+            "run_notifications": True,
         }
 
     with STATE_FILE.open("r", encoding="utf-8") as file:
@@ -100,6 +105,7 @@ def load_state():
     state.setdefault("restart_requested", False)
     state.setdefault("command_activity", 0)
     state.setdefault("idle_sleep_notified", False)
+    state.setdefault("run_notifications", True)
     return state
 
 
@@ -434,6 +440,7 @@ def record_publication(state, post, method, source):
     if not any(str(item.get("id")) == record["id"] for item in records):
         records.append(record)
     state["last_publication_at"] = now
+    RUN_PUBLICATIONS[media_type] += 1
 
 
 def record_publication_error(state, context):
@@ -954,6 +961,7 @@ def process_test_commands(state):
             "/clearstats",
             "/clearstate",
             "/currentpost",
+            "/runnotify",
         )
         # Built-in commands take priority over the dynamic /add<agent><count>
         # and /add<post_id> syntax. In particular, /addv1 is NOT agent "v".
@@ -979,6 +987,14 @@ def process_test_commands(state):
         # A new admin command starts a fresh idle period and allows the next
         # waiting notification to be sent after another full 60 seconds.
         state["idle_sleep_notified"] = False
+
+        if command_text == "/runnotify":
+            # /runnotify toggles both start and finish notifications.
+            enabled = not bool(state.get("run_notifications", True))
+            state["run_notifications"] = enabled
+            save_state(state)
+            send_message(chat_id, "🔔 Уведомления о запуске и завершении " + ("включены." if enabled else "выключены."))
+            continue
 
         if command_text == "/shutdown":
             # One-shot shutdown: stop this workflow run only. The next scheduled
@@ -1100,6 +1116,7 @@ def process_test_commands(state):
             help_text = (
                 "📋 Команды ValoArtsBot\n\n"
                 "/help — Показать список команд\n"
+                "/runnotify — Включить/выключить уведомления о запуске и завершении\n"
                 "/add1 — Опубликовать 1 старый пост, которого ещё нет в канале\n"
                 "/add10 — Опубликовать 10 старых постов, которых ещё нет в канале\n"
                 "/add50 — Опубликовать 50 старых постов, которых ещё нет в канале\n"
@@ -1644,9 +1661,53 @@ def main():
     )
 
 
-if __name__ == "__main__":
+def run_with_report():
+    """Send one pair of lifecycle notifications for the whole workflow process.
+
+    The publishing main() can recurse on /restart and /resume; wrapping it here
+    prevents extra start/finish notifications for those internal restarts.
+    """
+    start = time.monotonic()
+    initial_state = load_state()
+    # Process commands before start notice, so /runnotify can disable it.
+    # main() itself processes those commands. Notify after a preflight poll here.
+    process_test_commands(initial_state)
+    enabled_at_start = bool(initial_state.get("run_notifications", True))
+    if enabled_at_start and ADMIN_ID:
+        try:
+            send_message(ADMIN_ID, "🟢 Бот запустился. Начинаю рабочий цикл.")
+        except Exception as error:
+            print(f"Could not send run start notification: {error}")
+
+    failed = False
     try:
         main()
+    except Exception:
+        failed = True
+        raise
+    finally:
+        try:
+            final_state = load_state()
+            if final_state.get("run_notifications", True) and ADMIN_ID:
+                duration = int(time.monotonic() - start)
+                status = "⚠️ Работа завершена с ошибкой." if failed else "🔴 Работа завершена."
+                report = (
+                    f"{status}\n"
+                    f"🖼 Картинок: {RUN_PUBLICATIONS['image']}\n"
+                    f"🎬 Видео: {RUN_PUBLICATIONS['video']}\n"
+                    f"🎞 GIF: {RUN_PUBLICATIONS['gif']}\n"
+                    f"📦 Всего: {sum(RUN_PUBLICATIONS.values())}\n"
+                    f"⏱ Время работы: {duration // 60} мин {duration % 60} сек\n"
+                    f"📌 Последний обработанный ID: {final_state.get('last_post_id', 'нет данных')}"
+                )
+                send_message(ADMIN_ID, report)
+        except Exception as error:
+            print(f"Could not send run finish notification: {error}")
+
+
+if __name__ == "__main__":
+    try:
+        run_with_report()
     except Exception as error:
         # Covers uncaught failures such as Rule34 API or state-file errors.
         try:
