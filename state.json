@@ -2048,10 +2048,11 @@
     "19098372",
     "19100287",
     "19100323",
-    "19100610"
+    "19100610",
+    "19100788"
   ],
-  "last_post_id": 19100610,
-  "last_publication_at": "2026-10-20T09:24:46.993869+00:00",
+  "last_post_id": 19100788,
+  "last_publication_at": "2026-10-20T09:59:46.504957+00:00",
   "last_notified_error": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
   "auto_paused": false,
   "bot_enabled": true,
@@ -22668,9 +22669,19 @@
       "agents": [
         "hush"
       ]
+    },
+    {
+      "id": "19100788",
+      "at": "2026-10-20T09:59:46.504957+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
     }
   ],
-  "last_published_id": "19100610",
+  "last_published_id": "19100788",
   "last_update_id": 506713662,
   "post_delay": 1,
   "publication_errors": [
