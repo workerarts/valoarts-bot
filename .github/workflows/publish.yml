@@ -15,7 +15,7 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 18
 
     steps:
       - name: Checkout repository
@@ -44,7 +44,7 @@ jobs:
           RULE34_USER_ID: ${{ secrets.RULE34_USER_ID }}
         run: python bot.py
 
-      - name: Save state
+      - name: Save state even if bot fails
         if: always()
         shell: bash
         run: |
@@ -52,65 +52,72 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if [ ! -f state.json ]; then
-            echo "state.json missing; nothing to save"
-            exit 0
+            echo "ERROR: state.json is missing; cannot preserve publishing progress" >&2
+            exit 1
           fi
+          # Keep the bot's state outside the working tree while fetching remote changes.
           cp state.json "$RUNNER_TEMP/valoarts-local-state.json"
           branch="${GITHUB_REF_NAME}"
           for attempt in 1 2 3 4 5; do
             git fetch origin "$branch"
-            # Rebuild the state on the latest remote commit, so a push race
-            # never silently discards successfully sent IDs.
+            # This only resets the checkout; the bot's local state is backed up.
+            git reset --hard FETCH_HEAD
             python - "$RUNNER_TEMP/valoarts-local-state.json" <<'PYMERGE'
           import json, subprocess, sys
           from pathlib import Path
+
           local = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-          remote_bytes = subprocess.run(
-              ["git", "show", "FETCH_HEAD:state.json"],
-              capture_output=True, check=False,
-          )
-          remote = json.loads(remote_bytes.stdout) if remote_bytes.returncode == 0 else {}
-          local_epoch = int(local.get("history_reset_epoch", 0))
-          remote_epoch = int(remote.get("history_reset_epoch", 0))
+          remote_path = Path("state.json")
+          remote = json.loads(remote_path.read_text(encoding="utf-8")) if remote_path.exists() else {}
+          local_epoch = int(local.get("history_reset_epoch") or 0)
+          remote_epoch = int(remote.get("history_reset_epoch") or 0)
           if local_epoch > remote_epoch:
-              # A reset was requested during this run: use the reset history.
+              # /clearstate explicitly reset the publishing history in this run.
               merged = dict(remote)
               merged.update(local)
           elif remote_epoch > local_epoch:
-              # A stale workflow must not restore IDs cleared by a newer reset.
+              # Another run already reset history; never resurrect older IDs.
               merged = dict(local)
               merged.update(remote)
           else:
               merged = dict(remote)
               merged.update(local)
-              ids = {str(x) for x in remote.get("sent_ids", [])}
-              ids.update(str(x) for x in local.get("sent_ids", []))
-              merged["sent_ids"] = sorted(ids, key=lambda x: int(x))
-              cursors = [v for v in (remote.get("last_post_id"), local.get("last_post_id")) if v is not None]
+              for key in ("sent_ids", "skipped_invalid_ids"):
+                  ids = {str(x) for x in remote.get(key, [])}
+                  ids.update(str(x) for x in local.get(key, []))
+                  merged[key] = sorted(ids, key=int)
+              cursors = [int(v) for v in (remote.get("last_post_id"), local.get("last_post_id")) if v is not None]
               if cursors:
-                  merged["last_post_id"] = max(int(v) for v in cursors)
-          Path("state.json").write_text(json.dumps(merged, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+                  merged["last_post_id"] = max(cursors)
+              # Preserve statistics from both sides without duplicating entries.
+              records = {}
+              for record in remote.get("publication_stats", []) + local.get("publication_stats", []):
+                  if isinstance(record, dict):
+                      records[(str(record.get("id")), str(record.get("at")))] = record
+              if records:
+                  merged["publication_stats"] = sorted(records.values(), key=lambda x: str(x.get("at", "")))
+              errors = list(remote.get("publication_errors", []))
+              for item in local.get("publication_errors", []):
+                  if item not in errors:
+                      errors.append(item)
+              if errors:
+                  merged["publication_errors"] = errors
+          remote_path.write_text(json.dumps(merged, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           PYMERGE
             git add state.json
             if git diff --cached --quiet; then
-              echo "No new state changes"
+              echo "State is already up to date on GitHub"
               exit 0
             fi
-            # Commit on top of the latest remote tip, not the checkout's stale base.
-            git reset --mixed FETCH_HEAD
-            git add state.json
-            if git diff --cached --quiet; then
-              exit 0
-            fi
-            git commit -m "Update post history" || true
+            git commit -m "Save ValoArtsBot state [skip ci]"
             if git push origin "HEAD:$branch"; then
-              echo "state.json saved successfully"
+              echo "SUCCESS: state.json committed to GitHub"
               exit 0
             fi
-            echo "Push conflict (attempt $attempt/5); retrying"
-            sleep 2
+            echo "Push failed (attempt $attempt/5), retrying..."
+            sleep 3
           done
-          echo "Could not save state.json after 5 attempts" >&2
+          echo "ERROR: state.json could not be pushed after 5 attempts" >&2
           exit 1
 
       - name: Notify admin if GitHub Actions fails
