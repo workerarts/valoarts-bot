@@ -36,6 +36,44 @@ SESSION = requests.Session()
 SESSION.headers.update({"User-Agent": "ValoArtsBot/1.0"})
 
 
+# Retry transient API/download errors without retrying invalid media.
+RETRY_DELAYS = (3, 8)  # 3 total attempts.
+
+
+def request_with_retries(method, url, *, timeout, **kwargs):
+    """Retry transient GET errors and explicit Telegram 429/5xx responses.
+
+    Never replay a POST after a connection/read timeout: Telegram might have
+    accepted the upload even if its acknowledgement was lost.
+    """
+    for attempt in range(3):
+        retry_after = 0
+        try:
+            response = SESSION.request(method, url, timeout=timeout, **kwargs)
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as error:
+            if method.upper() != "GET" or attempt == 2:
+                raise
+            print(f"Temporary download error ({attempt + 1}/3): {error}")
+        else:
+            if response.status_code not in (429, 500, 502, 503, 504) or attempt == 2:
+                return response
+            print(f"Temporary HTTP {response.status_code} ({attempt + 1}/3): {url.split('?')[0].split('/bot')[0]}")
+            # Telegram may provide retry_after for rate limits.
+            retry_after = 0
+            if response.status_code == 429:
+                try:
+                    retry_after = int(response.json().get("parameters", {}).get("retry_after", 0))
+                except (ValueError, TypeError, AttributeError):
+                    pass
+            response.close()
+        delay = min(30, max(RETRY_DELAYS[attempt], retry_after))
+        if run_deadline_reached():
+            raise RuntimeError("Run deadline reached while retrying request")
+        print(f"Retrying in {delay}s...")
+        time.sleep(delay)
+    raise RuntimeError("Retry attempts exhausted")
+
+
 def load_state():
     if not STATE_FILE.exists():
         return {
@@ -223,8 +261,8 @@ def get_posts_after(last_post_id, max_pages=100):
 
 
 def send_media(method, field_name, file_data, filename, caption):
-    response = SESSION.post(
-        f"https://api.telegram.org/bot{BOT_TOKEN}/{method}",
+    response = request_with_retries(
+        "POST", f"https://api.telegram.org/bot{BOT_TOKEN}/{method}",
         data={
             "chat_id": CHANNEL_ID,
             "caption": caption,
@@ -540,7 +578,7 @@ def publish(post, state=None, source="auto", allow_duplicate=False):
 
     extension = Path(urlparse(media_url).path).suffix.lower()
 
-    response = SESSION.get(media_url, timeout=60)
+    response = request_with_retries("GET", media_url, timeout=60)
     response.raise_for_status()
 
     content_type = response.headers.get("Content-Type", "").lower()
