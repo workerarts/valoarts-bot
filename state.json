@@ -2053,10 +2053,18 @@
     "19101767",
     "19102902",
     "19103133",
-    "19105393"
+    "19105393",
+    "19105865",
+    "19105876",
+    "19105892",
+    "19105908",
+    "19105930",
+    "19105948",
+    "19105960",
+    "19105973"
   ],
-  "last_post_id": 19105393,
-  "last_publication_at": "2026-10-20T22:00:14.430795+00:00",
+  "last_post_id": 19105973,
+  "last_publication_at": "2026-10-20T22:30:18.261492+00:00",
   "last_notified_error": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
   "auto_paused": false,
   "bot_enabled": true,
@@ -22724,9 +22732,89 @@
       "agents": [
         "viper"
       ]
+    },
+    {
+      "id": "19105865",
+      "at": "2026-10-20T22:29:48.956923+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "19105876",
+      "at": "2026-10-20T22:29:54.350503+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "19105892",
+      "at": "2026-10-20T22:29:56.501962+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "19105908",
+      "at": "2026-10-20T22:30:02.178930+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "19105930",
+      "at": "2026-10-20T22:30:04.664126+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "19105948",
+      "at": "2026-10-20T22:30:10.306438+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "19105960",
+      "at": "2026-10-20T22:30:12.680320+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "19105973",
+      "at": "2026-10-20T22:30:18.261492+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
     }
   ],
-  "last_published_id": "19105393",
+  "last_published_id": "19105973",
   "last_update_id": 506713663,
   "post_delay": 1,
   "publication_errors": [
