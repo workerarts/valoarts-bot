@@ -1,4 +1,5 @@
 import json
+import io
 import os
 import re
 import time
@@ -474,6 +475,43 @@ def build_stats(state):
     )
 
 
+def repair_photo_for_telegram(file_data):
+    """Normalize an invalid still image into a Telegram-compatible JPEG."""
+    from PIL import Image, ImageOps, UnidentifiedImageError
+
+    with Image.open(io.BytesIO(file_data)) as image:
+        # Apply EXIF rotation before measuring dimensions.
+        image = ImageOps.exif_transpose(image)
+        image.load()
+        if image.width <= 0 or image.height <= 0:
+            raise ValueError("Invalid image dimensions")
+        image.thumbnail((2048, 2048), Image.Resampling.LANCZOS)
+        # Telegram photos must not have an extreme width/height ratio.
+        width, height = image.size
+        if max(width, height) / min(width, height) > 18:
+            if width > height:
+                canvas_size = (width, max(height, (width + 17) // 18))
+            else:
+                canvas_size = (max(width, (height + 17) // 18), height)
+            canvas = Image.new("RGB", canvas_size, "white")
+            converted = image.convert("RGBA")
+            x = (canvas_size[0] - width) // 2
+            y = (canvas_size[1] - height) // 2
+            canvas.paste(converted, (x, y), converted)
+            image = canvas
+        else:
+            if image.mode == "RGBA" or "transparency" in image.info:
+                canvas = Image.new("RGB", image.size, "white")
+                converted = image.convert("RGBA")
+                canvas.paste(converted, (0, 0), converted)
+                image = canvas
+            else:
+                image = image.convert("RGB")
+        output = io.BytesIO()
+        image.save(output, format="JPEG", quality=85, optimize=True)
+        return output.getvalue()
+
+
 def publish(post, state=None, source="auto", allow_duplicate=False):
     post_id = str(post["id"])
 
@@ -551,13 +589,37 @@ def publish(post, state=None, source="auto", allow_duplicate=False):
 
     caption = build_caption(post)
 
-    send_media(
-        method,
-        field_name,
-        file_data,
-        f"valorant_{post_id}{extension}",
-        caption,
-    )
+    try:
+        send_media(
+            method,
+            field_name,
+            file_data,
+            f"valorant_{post_id}{extension}",
+            caption,
+        )
+    except RuntimeError as error:
+        # Retry only a rejected still photo, not network/rate-limit errors.
+        if method != "sendPhoto" or not (
+            "TELEGRAM ERROR 400" in str(error).upper()
+            and any(code in str(error).upper() for code in (
+                "PHOTO_INVALID_DIMENSIONS", "PHOTO_INVALID", "IMAGE_PROCESS_FAILED",
+                "PHOTO_SAVE_FILE_INVALID",
+            ))
+        ):
+            raise
+        print(f"Repairing rejected photo {post_id} and retrying as JPEG")
+        try:
+            repaired = repair_photo_for_telegram(file_data)
+        except Exception as repair_error:
+            # Preserve original permanent Telegram error so auto-publisher
+            # skips this post instead of repeatedly getting stuck on it.
+            print(f"Could not repair photo {post_id}: {repair_error}")
+            raise error from repair_error
+        send_media(
+            "sendPhoto", "photo", repaired,
+            f"valorant_{post_id}_repaired.jpg", caption,
+        )
+        method = "sendPhoto"
 
     print(f"PUBLISHED: {post_id} ({method})")
 
