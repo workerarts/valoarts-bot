@@ -2052,10 +2052,11 @@
     "19100788",
     "19101767",
     "19102902",
-    "19103133"
+    "19103133",
+    "19105393"
   ],
-  "last_post_id": 19103133,
-  "last_publication_at": "2026-10-20T17:01:27.104573+00:00",
+  "last_post_id": 19105393,
+  "last_publication_at": "2026-10-20T22:00:14.430795+00:00",
   "last_notified_error": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
   "auto_paused": false,
   "bot_enabled": true,
@@ -22713,9 +22714,19 @@
       "agents": [
         "hush"
       ]
+    },
+    {
+      "id": "19105393",
+      "at": "2026-10-20T22:00:14.430795+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "viper"
+      ]
     }
   ],
-  "last_published_id": "19103133",
+  "last_published_id": "19105393",
   "last_update_id": 506713663,
   "post_delay": 1,
   "publication_errors": [
