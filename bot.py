@@ -885,6 +885,96 @@ def wait_while_paused(state, idle_timeout=60):
                 print(f"Could not send idle/waiting notification: {error}")
 
 
+def build_health_report(state):
+    """Check live APIs and local state without claiming a GitHub commit succeeded."""
+    uptime = int(time.monotonic() - RUN_STARTED_AT)
+    remaining = max(0, MAX_RUN_SECONDS - uptime)
+    if not state.get("bot_enabled", True):
+        status = "🔴 Выключен"
+    elif state.get("auto_paused", False):
+        status = "🟡 Автопубликация на паузе"
+    else:
+        status = "🟢 Работает"
+
+    def check_api(url, params=None):
+        try:
+            response = SESSION.get(url, params=params, timeout=10)
+            response.raise_for_status()
+            payload = response.json()
+            if isinstance(payload, dict) and payload.get("success") is False:
+                return "🔴 Ошибка API"
+            if isinstance(payload, dict) and payload.get("ok") is False:
+                return "🔴 Ошибка API"
+            return "🟢 Доступен"
+        except Exception as error:
+            print(f"Health API check failed: {type(error).__name__}: {error}")
+            return "🔴 Недоступен"
+
+    telegram_status = check_api(f"https://api.telegram.org/bot{BOT_TOKEN}/getMe")
+    rule34_status = check_api(API_URL, {
+        "page": "dapi", "s": "post", "q": "index", "json": "1",
+        "limit": "1", "tags": TAGS,
+        "api_key": RULE34_API_KEY, "user_id": RULE34_USER_ID,
+    })
+    try:
+        # Test only the local state.json, not the remote GitHub commit.
+        with STATE_FILE.open("r", encoding="utf-8") as file:
+            json.load(file)
+        state_status = "🟢 Локальный файл читается"
+    except (OSError, ValueError) as error:
+        state_status = "🔴 Ошибка чтения"
+        print(f"Health state check failed: {error}")
+    return (
+        "🩺 Состояние ValoArtsBot\n"
+        f"🤖 Статус: {status}\n"
+        f"🌐 Rule34 API: {rule34_status}\n"
+        f"📡 Telegram API: {telegram_status}\n"
+        f"💾 state.json: {state_status}\n"
+        "☁️ GitHub: сохранение проверяется workflow после работы бота\n"
+        f"⏱ Работает: {uptime // 60} мин {uptime % 60} сек\n"
+        f"⌛ До лимита бота: {remaining // 60} мин {remaining % 60} сек\n"
+        f"📌 Последний обработанный ID: {state.get('last_post_id', 'нет данных')}\n"
+        f"⚠️ Ошибок публикации за этот процесс: {len(state.get('publication_errors', []))} (накопительно)"
+    )
+
+
+def build_queue_report(state):
+    """Fetch an API snapshot; never change the publishing watermark."""
+    cursor = state.get("last_post_id")
+    if cursor is None:
+        return "📦 Очередь ValoArtsBot\nТочка отсчёта ещё не установлена."
+    posts = get_posts_after(int(cursor))
+    already_sent = {str(item) for item in state.get("sent_ids", [])}
+    pending = [post for post in posts if str(post["id"]) not in already_sent]
+    types = Counter()
+    for post in pending:
+        extension = Path(urlparse(str(post.get("file_url", ""))).path).suffix.lower()
+        if extension == ".gif":
+            types["gif"] += 1
+        elif extension == ".mp4":
+            types["video"] += 1
+        elif extension in (".jpg", ".jpeg", ".png"):
+            types["image"] += 1
+        else:
+            types["other"] += 1
+    newest = max((int(post["id"]) for post in posts), default=int(cursor))
+    next_id = min((int(post["id"]) for post in pending), default=None)
+    delay = max(1, int(state.get("post_delay", 5)))
+    return (
+        "📦 Очередь ValoArtsBot (снимок Rule34)\n"
+        f"📋 Ожидает обработки: {len(pending)}\n"
+        f"🖼 Изображений: {types['image']}\n"
+        f"🎬 Видео: {types['video']}\n"
+        f"🎞 GIF: {types['gif']}\n"
+        f"📎 Других форматов: {types['other']}\n"
+        f"📌 Следующий ID: {next_id if next_id is not None else 'нет'}\n"
+        f"🏁 Последний доступный ID: {newest}\n"
+        f"⏱ Минимум пауз: {len(pending) * delay // 60} мин "
+        f"{len(pending) * delay % 60} сек (без загрузки и отправки)\n"
+        "ℹ️ Количество может измениться; недоступные файлы будут пропущены."
+    )
+
+
 def process_test_commands(state):
     stop_auto_publish = False
     if not ADMIN_ID:
@@ -962,6 +1052,8 @@ def process_test_commands(state):
             "/clearstate",
             "/currentpost",
             "/runnotify",
+            "/health",
+            "/queue",
         )
         # Built-in commands take priority over the dynamic /add<agent><count>
         # and /add<post_id> syntax. In particular, /addv1 is NOT agent "v".
@@ -987,6 +1079,21 @@ def process_test_commands(state):
         # A new admin command starts a fresh idle period and allows the next
         # waiting notification to be sent after another full 60 seconds.
         state["idle_sleep_notified"] = False
+
+        if command_text == "/health":
+            send_message(chat_id, build_health_report(state))
+            save_state(state)
+            continue
+
+        if command_text == "/queue":
+            try:
+                send_message(chat_id, "🔎 Проверяю очередь Rule34, это может занять некоторое время...")
+                send_message(chat_id, build_queue_report(state))
+            except Exception as error:
+                print(f"Queue check failed: {type(error).__name__}: {error}")
+                send_message(chat_id, f"⚠️ Не удалось проверить очередь: {str(error)[:250]}")
+            save_state(state)
+            continue
 
         if command_text == "/runnotify":
             # /runnotify toggles both start and finish notifications.
@@ -1117,6 +1224,8 @@ def process_test_commands(state):
                 "📋 Команды ValoArtsBot\n\n"
                 "/help — Показать список команд\n"
                 "/runnotify — Включить/выключить уведомления о запуске и завершении\n"
+                "/health — Проверить состояние бота и доступность API\n"
+                "/queue — Проверить очередь неопубликованных артов\n"
                 "/add1 — Опубликовать 1 старый пост, которого ещё нет в канале\n"
                 "/add10 — Опубликовать 10 старых постов, которых ещё нет в канале\n"
                 "/add50 — Опубликовать 50 старых постов, которых ещё нет в канале\n"
