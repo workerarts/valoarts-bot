@@ -2045,10 +2045,12 @@
     "19094735",
     "19095881",
     "19098053",
-    "19098372"
+    "19098372",
+    "19100287",
+    "19100323"
   ],
-  "last_post_id": 19098372,
-  "last_publication_at": "2026-10-20T02:41:26.250207+00:00",
+  "last_post_id": 19100323,
+  "last_publication_at": "2026-10-20T08:14:49.623646+00:00",
   "last_notified_error": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
   "auto_paused": false,
   "bot_enabled": true,
@@ -22637,9 +22639,27 @@
       "agents": [
         "hush"
       ]
+    },
+    {
+      "id": "19100287",
+      "at": "2026-10-20T08:14:44.594491+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": []
+    },
+    {
+      "id": "19100323",
+      "at": "2026-10-20T08:14:49.623646+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
     }
   ],
-  "last_published_id": "19098372",
+  "last_published_id": "19100323",
   "last_update_id": 506713662,
   "post_delay": 1,
   "publication_errors": [
