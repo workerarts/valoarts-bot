@@ -123,26 +123,25 @@ class Rule34APIError(RuntimeError):
 
 
 def mark_rule34_down(error):
-    """Persist outage state across separate GitHub Actions runs."""
+    """Save outage status before attempting a one-time alert."""
     state = load_state()
     if state.get("rule34_outage_active"):
         print("Rule34 outage continues; duplicate alert suppressed.")
         return
-    message = (
-        "🔴 Rule34 API недоступен. Автопубликация приостановлена.\n"
-        "Сообщу, когда API снова заработает.\n"
-        f"Причина: {str(error)[:450]}"
-    )
-    # Only mark as notified after Telegram accepted the alert.
-    if ADMIN_ID:
-        try:
-            send_message(ADMIN_ID, message)
-        except Exception as notify_error:
-            print(f"Could not deliver outage alert: {notify_error}")
-            return
     state["rule34_outage_active"] = True
     state["rule34_outage_since"] = datetime.now(timezone.utc).isoformat()
     save_state(state)
+    if ADMIN_ID:
+        try:
+            send_message(
+                ADMIN_ID,
+                "🔴 Rule34 API недоступен. Автопубликация приостановлена.\n"
+                "Сообщу, когда API снова заработает.\n"
+                f"Причина: {str(error)[:450]}",
+            )
+        except Exception as notify_error:
+            print(f"Could not deliver outage alert: {notify_error}")
+
 
 
 def mark_rule34_recovered():
@@ -170,6 +169,8 @@ def get_posts(search_tags=TAGS, post_id=None, page=0):
     last_error = None
 
     for attempt in range(1, 5):
+        if run_deadline_reached():
+            raise RuntimeError("Достигнут лимит времени запуска")
         try:
             response = SESSION.get(
                 API_URL,
@@ -214,7 +215,10 @@ def get_posts(search_tags=TAGS, post_id=None, page=0):
             )
 
             if attempt < 4:
-                time.sleep(attempt * 10)
+                remaining = MAX_RUN_SECONDS - (time.monotonic() - RUN_STARTED_AT)
+                if remaining <= 0:
+                    raise RuntimeError("Достигнут лимит времени запуска")
+                time.sleep(min(attempt * 10, remaining))
     else:
         raise Rule34APIError(
             f"Не удалось получить данные Rule34 API после 4 попыток: "
@@ -290,7 +294,7 @@ def get_posts_after(last_post_id, max_pages=100):
             # Empty pages may indicate API trouble; only treat an empty page
             # as the end after at least one successful non-empty page.
             if page == 0:
-                raise Rule34APIError("Rule34 вернул пустую первую страницу")
+                raise RuntimeError("Rule34 вернул пустую первую страницу подходящих постов")
             print(f"Rule34 pagination finished at page {page} (empty page).")
             break
         page_ids = tuple(sorted(int(p["id"]) for p in page_posts))
@@ -764,6 +768,9 @@ def send_message(chat_id, message_text):
 
 def notify_admin_error(state, context, error):
     """Notify the administrator once per distinct error to avoid spam."""
+    if isinstance(error, Rule34APIError):
+        mark_rule34_down(error)
+        return
     details = f"{type(error).__name__}: {error}"
     fingerprint = details[:500]
     print(f"ERROR [{context}]: {details}")
@@ -1619,7 +1626,7 @@ def main():
     posts = (get_posts_after(int(state["last_post_id"]))
              if state.get("last_post_id") is not None else get_posts())
     if state.get("last_post_id") is None and not posts:
-        raise Rule34APIError("Rule34 не вернул ни одного подходящего поста на первой странице")
+        raise RuntimeError("Rule34 не вернул ни одного подходящего поста на первой странице")
     # Mark recovery only after the entire required API lookup succeeded.
     mark_rule34_recovered()
     # Refresh persisted outage flags before later state saves.
@@ -1641,7 +1648,7 @@ def main():
         posts = (get_posts_after(int(state["last_post_id"]))
                  if state.get("last_post_id") is not None else get_posts())
         if state.get("last_post_id") is None and not posts:
-            raise Rule34APIError("Rule34 не вернул ни одного подходящего поста на первой странице")
+            raise RuntimeError("Rule34 не вернул ни одного подходящего поста на первой странице")
         mark_rule34_recovered()
         state["rule34_outage_active"] = load_state().get("rule34_outage_active", False)
         if not state["rule34_outage_active"]:
