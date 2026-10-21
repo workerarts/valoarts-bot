@@ -2071,10 +2071,11 @@
     "19109889",
     "19110322",
     "19110353",
-    "19110508"
+    "19110508",
+    "19111979"
   ],
-  "last_post_id": 19110508,
-  "last_publication_at": "2026-10-21T18:27:13.008856+00:00",
+  "last_post_id": 19111979,
+  "last_publication_at": "2026-10-21T21:13:19.568975+00:00",
   "last_notified_error": "RuntimeError: Не удалось получить данные Rule34 API после 4 попыток: 503 Server Error: Service Unavailable for url: https://api.rule34.xxx/index.php?page=dapi&s=post&q=index&json=1&limit=1000&pid=0&tags=valorant+rating%3Aexplicit&api_key=fd1b306ee2d3ab17ed6ec4cde3bd26bc0a33be52233a00e6637dd260950db61d02b232f03f438e13171cc26fb2c68d4b9e6034afc1e8b47e8597785dc55501f4&user_id=5408211",
   "auto_paused": false,
   "bot_enabled": true,
@@ -22922,9 +22923,17 @@
       "agents": [
         "hush"
       ]
+    },
+    {
+      "id": "19111979",
+      "at": "2026-10-21T21:13:19.568975+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": []
     }
   ],
-  "last_published_id": "19110508",
+  "last_published_id": "19111979",
   "last_update_id": 506713671,
   "post_delay": 1,
   "publication_errors": [
