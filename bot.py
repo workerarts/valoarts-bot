@@ -118,6 +118,52 @@ def save_state(state):
     temporary.replace(STATE_FILE)
 
 
+class Rule34APIError(RuntimeError):
+    """A confirmed API request/response failure (not a media upload error)."""
+
+
+def mark_rule34_down(error):
+    """Persist outage state across separate GitHub Actions runs."""
+    state = load_state()
+    if state.get("rule34_outage_active"):
+        print("Rule34 outage continues; duplicate alert suppressed.")
+        return
+    message = (
+        "🔴 Rule34 API недоступен. Автопубликация приостановлена.\\n"
+        "Сообщу, когда API снова заработает.\\n"
+        f"Причина: {str(error)[:450]}"
+    )
+    # Only mark as notified after Telegram accepted the alert.
+    if ADMIN_ID:
+        try:
+            send_message(ADMIN_ID, message)
+        except Exception as notify_error:
+            print(f"Could not deliver outage alert: {notify_error}")
+            return
+    state["rule34_outage_active"] = True
+    state["rule34_outage_since"] = datetime.now(timezone.utc).isoformat()
+    save_state(state)
+
+
+def mark_rule34_recovered():
+    """Notify once after a successfully validated Rule34 API response."""
+    state = load_state()
+    if not state.get("rule34_outage_active"):
+        return
+    if ADMIN_ID:
+        try:
+            send_message(
+                ADMIN_ID,
+                "🟢 Rule34 API снова работает! Автопубликация возобновляется."
+            )
+        except Exception as notify_error:
+            print(f"Could not deliver recovery alert: {notify_error}")
+            return
+    state["rule34_outage_active"] = False
+    state.pop("rule34_outage_since", None)
+    save_state(state)
+
+
 def get_posts(search_tags=TAGS, post_id=None, page=0):
     # Rule34 иногда возвращает пустой ответ даже при HTTP 200.
     # Повторяем запрос несколько раз, прежде чем считать запуск неудачным.
@@ -144,7 +190,7 @@ def get_posts(search_tags=TAGS, post_id=None, page=0):
             response.raise_for_status()
 
             if not response.text.strip():
-                raise RuntimeError(
+                raise Rule34APIError(
                     f"Rule34 API вернул пустой ответ "
                     f"(HTTP {response.status_code})"
                 )
@@ -152,7 +198,7 @@ def get_posts(search_tags=TAGS, post_id=None, page=0):
             try:
                 data = response.json()
             except ValueError as error:
-                raise RuntimeError(
+                raise Rule34APIError(
                     "Rule34 API вернул не JSON. "
                     f"HTTP: {response.status_code}; "
                     f"Content-Type: {response.headers.get('Content-Type')}; "
@@ -170,14 +216,14 @@ def get_posts(search_tags=TAGS, post_id=None, page=0):
             if attempt < 4:
                 time.sleep(attempt * 10)
     else:
-        raise RuntimeError(
+        raise Rule34APIError(
             f"Не удалось получить данные Rule34 API после 4 попыток: "
             f"{last_error}"
         )
 
     if isinstance(data, dict):
         if data.get("success") is False:
-            raise RuntimeError(
+            raise Rule34APIError(
                 "Ошибка API Rule34: "
                 + str(data.get("message", data.get("error", "без описания")))
             )
@@ -188,7 +234,7 @@ def get_posts(search_tags=TAGS, post_id=None, page=0):
         if "id" in data:
             data = [data]
         else:
-            raise RuntimeError(
+            raise Rule34APIError(
                 f"Неизвестная структура JSON: {list(data.keys())}"
             )
 
@@ -196,7 +242,7 @@ def get_posts(search_tags=TAGS, post_id=None, page=0):
         data = []
 
     if not isinstance(data, list):
-        raise RuntimeError(
+        raise Rule34APIError(
             f"Неожиданный тип ответа Rule34: {type(data).__name__}"
         )
 
@@ -220,6 +266,7 @@ def get_posts(search_tags=TAGS, post_id=None, page=0):
 
         results.append(post)
 
+    mark_rule34_recovered()
     return sorted(results, key=lambda post: int(post["id"]))
 
 
@@ -493,7 +540,6 @@ def build_stats(state):
         "📊 Статистика ValoArtsBot\n"
         "(время и периоды: UTC)\n\n"
         f"🤖 Статус: {status}\n"
-        f"✅ Успешных публикаций с обновления: {len(records)}\n"
         f"🕐 За 24 часа: {count_24h}\n"
         f"📅 Сегодня: {sum(d == today for d in dates)}\n"
         f"📆 Эта неделя: {sum(d is not None and d >= week_start for d in dates)}\n"
@@ -777,7 +823,7 @@ def poll_delay_commands(state):
         print(f"Could not poll delay commands during publishing: {error}")
         return
 
-    delay_commands = {"/setdelay1": 1, "/setdelay3": 3, "/setdelay5": 5}
+    delay_commands = {}  # Dynamic /setdelayN is handled below.
     pending = state.setdefault("pending_updates", [])
 
     updates = result.get("result", [])
@@ -799,8 +845,9 @@ def poll_delay_commands(state):
             and chat.get("type") == "private"
         )
 
-        if is_admin_private and command in delay_commands and len(parts) == 1:
-            state["post_delay"] = delay_commands[command]
+        delay_match = re.fullmatch(r"/setdelay([1-9][0-9]*)", command, re.I)
+        if is_admin_private and delay_match and len(parts) == 1 and int(delay_match.group(1)) <= 300:
+            state["post_delay"] = int(delay_match.group(1))
             save_state(state)
             try:
                 send_message(
@@ -1058,13 +1105,17 @@ def process_test_commands(state):
         # Built-in commands take priority over the dynamic /add<agent><count>
         # and /add<post_id> syntax. In particular, /addv1 is NOT agent "v".
         is_builtin = command_text in supported_commands
-        custom_add = None if is_builtin else re.fullmatch(
+        dynamic_add = re.fullmatch(r"/add([1-9][0-9]*)", command_text, re.I)
+        dynamic_video = re.fullmatch(r"/addv([1-9][0-9]*)", command_text, re.I)
+        dynamic_test = re.fullmatch(r"/test([1-9][0-9]*)", command_text, re.I)
+        dynamic_delay = re.fullmatch(r"/setdelay([1-9][0-9]*)", command_text, re.I)
+        custom_add = None if is_builtin or dynamic_video or dynamic_add else re.fullmatch(
             r"/add([a-z][a-z_]*?)([1-9][0-9]*)", command_text, re.I
         )
         custom_id = None if is_builtin else re.fullmatch(
             r"/add([0-9]+)", command_text, re.I
         )
-        if command_text not in supported_commands and not custom_add and not custom_id:
+        if command_text not in supported_commands and not custom_add and not custom_id and not dynamic_add and not dynamic_video and not dynamic_test and not dynamic_delay:
             continue
 
         chat_id = chat.get("id")
@@ -1226,14 +1277,9 @@ def process_test_commands(state):
                 "/runnotify — Включить/выключить уведомления о запуске и завершении\n"
                 "/health — Проверить состояние бота и доступность API\n"
                 "/queue — Проверить очередь неопубликованных артов\n"
-                "/add1 — Опубликовать 1 старый пост, которого ещё нет в канале\n"
-                "/add10 — Опубликовать 10 старых постов, которых ещё нет в канале\n"
-                "/add50 — Опубликовать 50 старых постов, которых ещё нет в канале\n"
-                "/addv1 — Опубликовать 1 старое видео MP4, которого ещё нет в канале\n"
-                "/addv10 — Опубликовать 10 старых видео MP4, которого ещё нет в канале\n"
-                "/setdelay1 — Интервал 1 секунда между публикациями\n"
-                "/setdelay3 — Интервал 3 секунды между публикациями\n"
-                "/setdelay5 — Интервал 5 секунд между публикациями\n"
+                "/addN — Опубликовать N старых неопубликованных постов (1–50). Пример: /add25\n"
+                "/addvN — Опубликовать N старых неопубликованных MP4 (1–50). Пример: /addv7\n"
+                "/setdelayN — Интервал N секунд (1–300). Пример: /setdelay8\n"
                 "/setdelay — Показать текущий интервал\n"
                 "/pause — Приостановить автопубликацию\n"
                 "/resume — Возобновить автопубликацию\n"
@@ -1251,7 +1297,7 @@ def process_test_commands(state):
                 "/testimage — Последняя доступная картинка\n"
                 "/testgif — Последняя доступная GIF-анимация\n"
                 "/testvideo — Последнее доступное видео\n"
-                "/test10 — Последние 10 доступных постов\n\n"
+                "/testN — Последние N доступных постов (1–50). Пример: /test20\n\n"
                 "Команды доступны только администратору."
             )
             send_message(chat_id, help_text)
@@ -1265,21 +1311,17 @@ def process_test_commands(state):
             )
             continue
 
-        delay_commands = {
-            "/setdelay1": 1,
-            "/setdelay3": 3,
-            "/setdelay5": 5,
-        }
-        if command_text in delay_commands:
-            state["post_delay"] = delay_commands[command_text]
+        if dynamic_delay:
+            delay = int(dynamic_delay.group(1))
+            if delay > 300:
+                send_message(chat_id, "❌ Интервал должен быть от 1 до 300 секунд.")
+                continue
+            state["post_delay"] = delay
             save_state(state)
-            send_message(
-                chat_id,
-                f"✅ Интервал изменён! Теперь между публикациями {state['post_delay']} сек. Настройка сохранена."
-            )
+            send_message(chat_id, f"✅ Интервал изменён: {delay} сек. Настройка сохранена.")
             continue
 
-        if custom_add or custom_id:
+        if custom_add or (custom_id and int(custom_id.group(1)) >= 1000000):
             # Specific requests are fetched separately, not from the latest
             # 1000 generic VALORANT results. Never modify the auto watermark.
             try:
@@ -1352,15 +1394,12 @@ def process_test_commands(state):
             # выбирают старые посты из доступной выборки Rule34, которых
             # ещё нет в sent_ids. Автоматическая публикация использует watermark
             # отдельно, ниже в main().
-            if command_text in ("/add1", "/add10", "/add50", "/addv1", "/addv10"):
-                limit = {
-                    "/add1": 1,
-                    "/add10": 10,
-                    "/add50": 50,
-                    "/addv1": 1,
-                    "/addv10": 10,
-                }[command_text]
-                videos_only = command_text in ("/addv1", "/addv10")
+            if dynamic_add or dynamic_video:
+                limit = int((dynamic_add or dynamic_video).group(1))
+                if limit > 50:
+                    send_message(chat_id, "❌ За одну команду можно запросить максимум 50 постов.")
+                    continue
+                videos_only = bool(dynamic_video)
                 supported_extensions = {".jpg", ".jpeg", ".png", ".gif", ".mp4"}
 
                 pending = [
@@ -1430,7 +1469,11 @@ def process_test_commands(state):
                               ("ID публикаций: " + ", ".join(successes)) if successes else "")
                 continue
 
-            if command_text == "/test10":
+            if dynamic_test:
+                test_limit = int(dynamic_test.group(1))
+                if test_limit > 50:
+                    send_message(chat_id, "❌ За один тест можно запросить максимум 50 постов.")
+                    continue
                 supported_extensions = {
                     ".jpg", ".jpeg", ".png", ".gif", ".mp4"
                 }
@@ -1439,7 +1482,7 @@ def process_test_commands(state):
                     for post in reversed(posts)
                     if Path(urlparse(post["file_url"]).path).suffix.lower()
                     in supported_extensions
-                ][:10]
+                ][:test_limit]
 
                 if not candidates:
                     send_message(
@@ -1478,7 +1521,7 @@ def process_test_commands(state):
                         break
 
                 summary = (
-                    f"Тест 10 постов завершён. Успешно: {len(successes)}, "
+                    f"Тест {len(candidates)} постов завершён. Успешно: {len(successes)}, "
                     f"ошибок/пропусков: {len(failures)}."
                 )
                 if successes:
@@ -1597,6 +1640,13 @@ def main():
 
     posts = (get_posts_after(int(state["last_post_id"]))
              if state.get("last_post_id") is not None else get_posts())
+    # Refresh persisted outage flags before later state saves.
+    refreshed = load_state()
+    state["rule34_outage_active"] = refreshed.get("rule34_outage_active", False)
+    if "rule34_outage_since" in refreshed:
+        state["rule34_outage_since"] = refreshed["rule34_outage_since"]
+    else:
+        state.pop("rule34_outage_since", None)
     # The API request can take time; handle commands that arrived while it ran.
     stop_requested = process_test_commands(state)
     if state.get("shutdown_once", False):
@@ -1608,6 +1658,9 @@ def main():
         print("Restart requested during API lookup; fetching fresh data.")
         posts = (get_posts_after(int(state["last_post_id"]))
                  if state.get("last_post_id") is not None else get_posts())
+        state["rule34_outage_active"] = load_state().get("rule34_outage_active", False)
+        if not state["rule34_outage_active"]:
+            state.pop("rule34_outage_since", None)
         stop_requested = False
     if not state.get("bot_enabled", True):
         state["auto_paused"] = True
@@ -1782,7 +1835,7 @@ def run_with_report():
     # main() itself processes those commands. Notify after a preflight poll here.
     process_test_commands(initial_state)
     enabled_at_start = bool(initial_state.get("run_notifications", True))
-    if enabled_at_start and ADMIN_ID:
+    if enabled_at_start and ADMIN_ID and not initial_state.get("rule34_outage_active"):
         try:
             send_message(ADMIN_ID, "🟢 Бот запустился. Начинаю рабочий цикл.")
         except Exception as error:
@@ -1791,13 +1844,17 @@ def run_with_report():
     failed = False
     try:
         main()
+    except Rule34APIError as error:
+        failed = True
+        mark_rule34_down(error)
+        raise
     except Exception:
         failed = True
         raise
     finally:
         try:
             final_state = load_state()
-            if final_state.get("run_notifications", True) and ADMIN_ID:
+            if final_state.get("run_notifications", True) and ADMIN_ID and not final_state.get("rule34_outage_active"):
                 duration = int(time.monotonic() - start)
                 status = "⚠️ Работа завершена с ошибкой." if failed else "🔴 Работа завершена."
                 report = (
@@ -1824,5 +1881,6 @@ if __name__ == "__main__":
         except Exception as state_error:
             print(f"Could not load state while reporting failure: {state_error}")
             current_state = {"_do_not_save_state": True}
-        notify_admin_error(current_state, "Критическая ошибка запуска", error)
+        if not isinstance(error, Rule34APIError):
+            notify_admin_error(current_state, "Критическая ошибка запуска", error)
         raise
