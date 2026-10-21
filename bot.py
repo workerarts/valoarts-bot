@@ -129,8 +129,8 @@ def mark_rule34_down(error):
         print("Rule34 outage continues; duplicate alert suppressed.")
         return
     message = (
-        "🔴 Rule34 API недоступен. Автопубликация приостановлена.\\n"
-        "Сообщу, когда API снова заработает.\\n"
+        "🔴 Rule34 API недоступен. Автопубликация приостановлена.\n"
+        "Сообщу, когда API снова заработает.\n"
         f"Причина: {str(error)[:450]}"
     )
     # Only mark as notified after Telegram accepted the alert.
@@ -266,7 +266,6 @@ def get_posts(search_tags=TAGS, post_id=None, page=0):
 
         results.append(post)
 
-    mark_rule34_recovered()
     return sorted(results, key=lambda post: int(post["id"]))
 
 
@@ -291,12 +290,12 @@ def get_posts_after(last_post_id, max_pages=100):
             # Empty pages may indicate API trouble; only treat an empty page
             # as the end after at least one successful non-empty page.
             if page == 0:
-                raise RuntimeError("Rule34 вернул пустую первую страницу")
+                raise Rule34APIError("Rule34 вернул пустую первую страницу")
             print(f"Rule34 pagination finished at page {page} (empty page).")
             break
         page_ids = tuple(sorted(int(p["id"]) for p in page_posts))
         if page_ids == previous_page_ids:
-            raise RuntimeError(f"Rule34 repeated page {page}; stopping to avoid skipping posts")
+            raise Rule34APIError(f"Rule34 repeated page {page}; stopping to avoid skipping posts")
         previous_page_ids = page_ids
         for post in page_posts:
             if int(post["id"]) > last_post_id:
@@ -1084,7 +1083,6 @@ def process_test_commands(state):
             "/shutdown",
             "/restart",
             "/stats",
-            "/statistics",
             "/clearstats",
             "/clearstate",
             "/currentpost",
@@ -1255,7 +1253,7 @@ def process_test_commands(state):
                 send_message(chat_id, "ℹ️ Пока нет данных о последнем опубликованном арте.")
             continue
 
-        if command_text in ("/stats", "/statistics"):
+        if command_text == "/stats":
             send_message(chat_id, build_stats(state))
             continue
 
@@ -1620,6 +1618,10 @@ def main():
 
     posts = (get_posts_after(int(state["last_post_id"]))
              if state.get("last_post_id") is not None else get_posts())
+    if state.get("last_post_id") is None and not posts:
+        raise Rule34APIError("Rule34 не вернул ни одного подходящего поста на первой странице")
+    # Mark recovery only after the entire required API lookup succeeded.
+    mark_rule34_recovered()
     # Refresh persisted outage flags before later state saves.
     refreshed = load_state()
     state["rule34_outage_active"] = refreshed.get("rule34_outage_active", False)
@@ -1638,6 +1640,9 @@ def main():
         print("Restart requested during API lookup; fetching fresh data.")
         posts = (get_posts_after(int(state["last_post_id"]))
                  if state.get("last_post_id") is not None else get_posts())
+        if state.get("last_post_id") is None and not posts:
+            raise Rule34APIError("Rule34 не вернул ни одного подходящего поста на первой странице")
+        mark_rule34_recovered()
         state["rule34_outage_active"] = load_state().get("rule34_outage_active", False)
         if not state["rule34_outage_active"]:
             state.pop("rule34_outage_since", None)
@@ -1827,7 +1832,10 @@ def run_with_report():
     except Rule34APIError as error:
         failed = True
         mark_rule34_down(error)
-        raise
+        # API outage is an expected, recoverable condition. Finish with exit 0
+        # so the workflow can commit state.json and suppress alerts next run.
+        print(f"Rule34 API remains unavailable: {error}")
+        return
     except Exception:
         failed = True
         raise
