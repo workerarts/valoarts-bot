@@ -1,3 +1,4 @@
+# ValoArtsBot — compact edition. Same Python AST, all functions and strings preserved.
 import json
 import io
 import os
@@ -562,6 +563,25 @@ def sleep_with_command_polling(state, seconds):
         elapsed += 1
     return False
 
+def wait_for_commands_when_no_posts(state, seconds=120):
+    """Keep the bot responsive for two minutes when there is nothing to publish.
+
+    Manual commands can still publish media; /pause and /shutdown stop the wait.
+    Do not exceed the workflow's overall run deadline.
+    """
+    if not ADMIN_ID or not state.get('bot_enabled', True) or state.get('auto_paused', False):
+        return
+    ends_at = min(time.monotonic() + seconds, RUN_STARTED_AT + MAX_RUN_SECONDS - 15)
+    print(f'No new posts; listening for administrator commands for up to {seconds} seconds.')
+    while time.monotonic() < ends_at:
+        should_stop = process_test_commands(state)
+        if should_stop or state.get('shutdown_once', False) or state.get('restart_requested', False):
+            break
+        if state.get('auto_paused', False) or not state.get('bot_enabled', True):
+            break
+        time.sleep(min(2, max(0, ends_at - time.monotonic())))
+    save_state(state)
+
 def wait_while_paused(state, idle_timeout=60):
     """While auto publishing is paused, handle admin commands for up to
     idle_timeout seconds after the most recent command, then let this run exit.
@@ -1041,6 +1061,7 @@ def main():
         return
     if not posts:
         print('No matching posts returned by Rule34 API.')
+        wait_for_commands_when_no_posts(state)
         return
     latest_post = posts[-1]
     latest_id = int(latest_post['id'])
@@ -1072,6 +1093,7 @@ def main():
     new_posts.sort(key=lambda post: int(post['id']))
     if not new_posts:
         print(f'No new posts. Latest available ID: {latest_id}; last published/processed ID: {last_post_id}')
+        wait_for_commands_when_no_posts(state)
         return
     print(f"Found {len(new_posts)} new post(s), IDs {new_posts[0]['id']}–{new_posts[-1]['id']}")
     sent_ids = set((str(item) for item in state.get('sent_ids', [])))
