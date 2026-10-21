@@ -739,7 +739,7 @@ def notify_start(chat_id, action, requested):
 
 def notify_finish(chat_id, action, requested, successes, failures=0, details=""):
     message = (
-        f"✅ Закончил {action}\n"
+        f"{'✅' if successes and not failures else '⚠️' if failures else 'ℹ️'} Завершено: {action}\n"
         f"📦 Запрошено: {requested}\n"
         f"📤 Опубликовано: {successes}\n"
         f"⚠️ Ошибок/пропусков: {failures}"
@@ -852,19 +852,10 @@ def poll_delay_commands(state):
             try:
                 send_message(
                     chat_id,
-                    f"✅ Интервал изменён! Теперь между публикациями {state['post_delay']} сек. Настройка сохранена."
+                    f"✅ Интервал между публикациями: {state['post_delay']} сек. Настройка сохранена."
                 )
             except Exception as error:
                 print(f"Could not send delay confirmation: {error}")
-        elif is_admin_private and command == "/setdelay" and len(parts) == 1:
-            current_delay = int(state.get("post_delay", 5))
-            try:
-                send_message(
-                    chat_id,
-                    f"⏱ Интервал между публикациями: {current_delay} сек."
-                )
-            except Exception as error:
-                print(f"Could not send current delay: {error}")
         else:
             # Preserve other commands so they can be handled normally later.
             pending.append(update)
@@ -1085,7 +1076,6 @@ def process_test_commands(state):
             "/add50",
             "/addv1",
             "/addv10",
-            "/setdelay",
             "/setdelay1",
             "/setdelay3",
             "/setdelay5",
@@ -1164,9 +1154,9 @@ def process_test_commands(state):
             save_state(state)
             send_message(
                 chat_id,
-                "🛑 Текущий запуск ValoArtsBot остановлен.\n"
+                "🛑 Текущий запуск бота остановлен.\n"
                 "При следующем запуске GitHub Actions по расписанию бот автоматически продолжит работу.\n"
-                "/start не включает бота и не выполняет действий."
+                "Команда /start не запускает публикации."
             )
             stop_auto_publish = True
             continue
@@ -1175,8 +1165,8 @@ def process_test_commands(state):
             # Intentionally no start/resume behavior for this command.
             send_message(
                 chat_id,
-                "ℹ️ Команда /start не имеет функции управления ботом.\n"
-                "Используй /restart для перезапуска текущего рабочего цикла."
+                "ℹ️ Команда /start не запускает публикации.\n"
+                "Для перезапуска рабочего цикла используй /restart, а для списка команд — /help."
             )
             continue
 
@@ -1207,7 +1197,7 @@ def process_test_commands(state):
                 state["bot_enabled"] = True
                 state["auto_paused"] = False
                 save_state(state)
-                send_message(chat_id, "▶️ Автопубликация возобновлена; бот включён.")
+                send_message(chat_id, "▶️ Автопубликация возобновлена.")
             save_state(state)
             continue
 
@@ -1243,10 +1233,9 @@ def process_test_commands(state):
             save_state(state)
             send_message(
                 chat_id,
-                "🤖 ValoArtsBot\n━━━━━━━━━━━━\n"
                 "🧹 История публикаций сброшена.\n"
                 "📌 Последний обработанный арт: 16384015\n"
-                "📚 В истории остался только этот ID.\n"
+                "📚 В истории сохранён только этот ID.\n"
                 "▶️ Следующий запуск продолжит автопубликацию после него."
             )
             # Stop this run: it may already have fetched posts using the old cursor.
@@ -1272,43 +1261,34 @@ def process_test_commands(state):
 
         if command_text == "/help":
             help_text = (
-                "📋 Команды ValoArtsBot\n\n"
+                "📋 Доступные команды\n\n"
                 "/help — Показать список команд\n"
                 "/runnotify — Включить/выключить уведомления о запуске и завершении\n"
                 "/health — Проверить состояние бота и доступность API\n"
                 "/queue — Проверить очередь неопубликованных артов\n"
                 "/addN — Опубликовать N старых неопубликованных постов (1–50). Пример: /add25\n"
                 "/addvN — Опубликовать N старых неопубликованных MP4 (1–50). Пример: /addv7\n"
-                "/setdelayN — Интервал N секунд (1–300). Пример: /setdelay8\n"
-                "/setdelay — Показать текущий интервал\n"
+                "/setdelayN — Установить интервал N секунд (1–300). Пример: /setdelay8\n"
                 "/pause — Приостановить автопубликацию\n"
                 "/resume — Возобновить автопубликацию\n"
                 "/shutdown — Остановить текущий запуск; следующий запуск по расписанию продолжит работу\n"
-                "/start — Не имеет функции управления ботом\n"
+                "/start — Показать подсказку по управлению ботом\n"
                 "/restart — Начать рабочий цикл заново без сброса истории\n"
                 "/stats — Подробная статистика публикаций\n"
                 "/currentpost — ID последнего опубликованного арта\n"
                 "/clearstats — Очистить накопленную статистику (без сброса истории ID)\n"
                 "/clearstate — Сбросить историю публикаций до ID 16384015\n"
-                "/add<ИмяАгента><КоличествоПостов> — Опубликовать арты выбранного агента (макс. 50)\n"
+                "/addИМЯN — Опубликовать до N неопубликованных артов персонажа (1–50)\n"
                 "Пример: /addjett10 — 10 артов с Jett\n"
-                "/add12345678 — Опубликовать пост по ID, только если это VALORANT\n\n"
+                "/add12345678 — Опубликовать пост с указанным ID, если он подходит под фильтр Valorant\n\n"
                 "🧪 Тестовые команды (публикуют последние доступные файлы):\n"
                 "/testimage — Последняя доступная картинка\n"
                 "/testgif — Последняя доступная GIF-анимация\n"
                 "/testvideo — Последнее доступное видео\n"
                 "/testN — Последние N доступных постов (1–50). Пример: /test20\n\n"
-                "Команды доступны только администратору."
+                "Команды управления доступны администратору в личном чате с ботом."
             )
             send_message(chat_id, help_text)
-            continue
-
-        if command_text == "/setdelay":
-            current_delay = int(state.get("post_delay", 5))
-            send_message(
-                chat_id,
-                f"⏱ Интервал между публикациями: {current_delay} сек."
-            )
             continue
 
         if dynamic_delay:
@@ -1318,7 +1298,7 @@ def process_test_commands(state):
                 continue
             state["post_delay"] = delay
             save_state(state)
-            send_message(chat_id, f"✅ Интервал изменён: {delay} сек. Настройка сохранена.")
+            send_message(chat_id, f"✅ Интервал между публикациями: {delay} сек. Настройка сохранена.")
             continue
 
         if custom_add or (custom_id and int(custom_id.group(1)) >= 1000000):
@@ -1356,7 +1336,7 @@ def process_test_commands(state):
                 candidates = [p for p in candidates if Path(urlparse(p["file_url"]).path).suffix.lower()
                               in {".jpg", ".jpeg", ".png", ".gif", ".mp4"}]
                 if not candidates:
-                    send_message(chat_id, "⚠️ Добавление не начато: подходящих неопубликованных постов не найдено.")
+                    send_message(chat_id, "ℹ️ Подходящих неопубликованных постов не найдено.")
                     continue
                 limit = 1 if custom_id else count
                 successes = 0
@@ -1422,7 +1402,7 @@ def process_test_commands(state):
                 if not candidates:
                     send_message(
                         chat_id,
-                        "⚠️ Добавление не начато: подходящих неопубликованных постов не найдено в выборке Rule34."
+                        "ℹ️ В доступной выборке Rule34 нет подходящих неопубликованных постов."
                     )
                     continue
 
@@ -1487,7 +1467,7 @@ def process_test_commands(state):
                 if not candidates:
                     send_message(
                         chat_id,
-                        "⚠️ Тест не начат: подходящих изображений, GIF или видео не найдено."
+                        "ℹ️ Подходящих изображений, GIF или видео для теста не найдено."
                     )
                     continue
 
