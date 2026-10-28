@@ -2245,10 +2245,11 @@
     "19181405",
     "19181456",
     "19182565",
-    "19182918"
+    "19182918",
+    "19184501"
   ],
-  "last_post_id": 19182918,
-  "last_publication_at": "2026-10-28T16:18:42.354587+00:00",
+  "last_post_id": 19184501,
+  "last_publication_at": "2026-10-28T19:40:21.168109+00:00",
   "last_notified_error": "ChunkedEncodingError: ('Connection broken: IncompleteRead(1392640 bytes read, 70375 more expected)', IncompleteRead(1392640 bytes read, 70375 more expected))",
   "auto_paused": false,
   "bot_enabled": true,
@@ -24833,9 +24834,20 @@
       "agents": [
         "reyna"
       ]
+    },
+    {
+      "id": "19184501",
+      "at": "2026-10-28T19:40:21.168109+00:00",
+      "source": "auto",
+      "type": "video",
+      "art": "original",
+      "agents": [
+        "omen",
+        "sage"
+      ]
     }
   ],
-  "last_published_id": "19182918",
+  "last_published_id": "19184501",
   "last_update_id": 506713671,
   "post_delay": 1,
   "publication_errors": [
