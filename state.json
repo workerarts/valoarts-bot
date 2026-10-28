@@ -2246,10 +2246,22 @@
     "19181456",
     "19182565",
     "19182918",
-    "19184501"
+    "19184501",
+    "19185525",
+    "19185576",
+    "19185594",
+    "19185598",
+    "19185606",
+    "19185611",
+    "19185614",
+    "19185620",
+    "19185623",
+    "19185630",
+    "19185635",
+    "19185655"
   ],
-  "last_post_id": 19184501,
-  "last_publication_at": "2026-10-28T19:40:21.168109+00:00",
+  "last_post_id": 19185655,
+  "last_publication_at": "2026-10-28T22:29:45.506609+00:00",
   "last_notified_error": "ChunkedEncodingError: ('Connection broken: IncompleteRead(1392640 bytes read, 70375 more expected)', IncompleteRead(1392640 bytes read, 70375 more expected))",
   "auto_paused": false,
   "bot_enabled": true,
@@ -24845,9 +24857,129 @@
         "omen",
         "sage"
       ]
+    },
+    {
+      "id": "19185525",
+      "at": "2026-10-28T22:29:06.546135+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
+    },
+    {
+      "id": "19185576",
+      "at": "2026-10-28T22:29:11.316121+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
+    },
+    {
+      "id": "19185594",
+      "at": "2026-10-28T22:29:12.944744+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "19185598",
+      "at": "2026-10-28T22:29:17.696363+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "19185606",
+      "at": "2026-10-28T22:29:20.124655+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "19185611",
+      "at": "2026-10-28T22:29:25.069669+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "19185614",
+      "at": "2026-10-28T22:29:27.675942+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "19185620",
+      "at": "2026-10-28T22:29:32.581497+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "19185623",
+      "at": "2026-10-28T22:29:34.222330+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "19185630",
+      "at": "2026-10-28T22:29:38.984630+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "19185635",
+      "at": "2026-10-28T22:29:40.756816+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "19185655",
+      "at": "2026-10-28T22:29:45.506609+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
     }
   ],
-  "last_published_id": "19184501",
+  "last_published_id": "19185655",
   "last_update_id": 506713671,
   "post_delay": 1,
   "publication_errors": [
