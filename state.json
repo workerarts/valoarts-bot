@@ -2267,10 +2267,15 @@
     "19188839",
     "19188867",
     "19189559",
-    "19189788"
+    "19189788",
+    "19191238",
+    "19191247",
+    "19191254",
+    "19191267",
+    "19191283"
   ],
-  "last_post_id": 19189788,
-  "last_publication_at": "2026-10-29T12:09:20.190813+00:00",
+  "last_post_id": 19191283,
+  "last_publication_at": "2026-10-29T17:00:10.752882+00:00",
   "last_notified_error": "ChunkedEncodingError: ('Connection broken: IncompleteRead(1392640 bytes read, 70375 more expected)', IncompleteRead(1392640 bytes read, 70375 more expected))",
   "auto_paused": false,
   "bot_enabled": true,
@@ -25076,9 +25081,59 @@
       "agents": [
         "reyna"
       ]
+    },
+    {
+      "id": "19191238",
+      "at": "2026-10-29T16:59:55.336456+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "reyna"
+      ]
+    },
+    {
+      "id": "19191247",
+      "at": "2026-10-29T17:00:01.137344+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "reyna",
+        "sage"
+      ]
+    },
+    {
+      "id": "19191254",
+      "at": "2026-10-29T17:00:03.342819+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "killjoy"
+      ]
+    },
+    {
+      "id": "19191267",
+      "at": "2026-10-29T17:00:08.882134+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "clove",
+        "iso"
+      ]
+    },
+    {
+      "id": "19191283",
+      "at": "2026-10-29T17:00:10.752882+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": []
     }
   ],
-  "last_published_id": "19189788",
+  "last_published_id": "19191283",
   "last_update_id": 506713671,
   "post_delay": 1,
   "publication_errors": [
