@@ -2258,10 +2258,11 @@
     "19185623",
     "19185630",
     "19185635",
-    "19185655"
+    "19185655",
+    "19186462"
   ],
-  "last_post_id": 19185655,
-  "last_publication_at": "2026-10-28T22:29:45.506609+00:00",
+  "last_post_id": 19186462,
+  "last_publication_at": "2026-10-29T00:16:42.539313+00:00",
   "last_notified_error": "ChunkedEncodingError: ('Connection broken: IncompleteRead(1392640 bytes read, 70375 more expected)', IncompleteRead(1392640 bytes read, 70375 more expected))",
   "auto_paused": false,
   "bot_enabled": true,
@@ -24977,9 +24978,19 @@
       "agents": [
         "hush"
       ]
+    },
+    {
+      "id": "19186462",
+      "at": "2026-10-29T00:16:42.539313+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "reyna"
+      ]
     }
   ],
-  "last_published_id": "19185655",
+  "last_published_id": "19186462",
   "last_update_id": 506713671,
   "post_delay": 1,
   "publication_errors": [
