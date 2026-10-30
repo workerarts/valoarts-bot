@@ -2286,7 +2286,7 @@
   ],
   "last_post_id": 19196454,
   "last_publication_at": "2026-10-30T05:34:11.965340+00:00",
-  "last_notified_error": "ChunkedEncodingError: ('Connection broken: IncompleteRead(1392640 bytes read, 70375 more expected)', IncompleteRead(1392640 bytes read, 70375 more expected))",
+  "last_notified_error": "ReadTimeout: HTTPSConnectionPool(host='api.telegram.org', port=443): Read timed out. (read timeout=30)",
   "auto_paused": false,
   "bot_enabled": true,
   "shutdown_once": false,
