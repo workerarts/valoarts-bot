@@ -2279,10 +2279,13 @@
     "19192710",
     "19193061",
     "19193874",
-    "19196108"
+    "19196108",
+    "19196379",
+    "19196428",
+    "19196454"
   ],
-  "last_post_id": 19196108,
-  "last_publication_at": "2026-10-30T04:54:41.722254+00:00",
+  "last_post_id": 19196454,
+  "last_publication_at": "2026-10-30T05:34:11.965340+00:00",
   "last_notified_error": "ChunkedEncodingError: ('Connection broken: IncompleteRead(1392640 bytes read, 70375 more expected)', IncompleteRead(1392640 bytes read, 70375 more expected))",
   "auto_paused": false,
   "bot_enabled": true,
@@ -25208,9 +25211,39 @@
       "agents": [
         "clove"
       ]
+    },
+    {
+      "id": "19196379",
+      "at": "2026-10-30T05:34:05.029985+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
+    },
+    {
+      "id": "19196428",
+      "at": "2026-10-30T05:34:10.076525+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
+    },
+    {
+      "id": "19196454",
+      "at": "2026-10-30T05:34:11.965340+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
     }
   ],
-  "last_published_id": "19196108",
+  "last_published_id": "19196454",
   "last_update_id": 506713671,
   "post_delay": 1,
   "publication_errors": [
