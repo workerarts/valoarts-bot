@@ -2307,13 +2307,13 @@
     "19208220"
   ],
   "last_post_id": 19208220,
-  "last_publication_at": "2026-10-31T15:01:20.556380+00:00",
+  "last_publication_at": "2026-10-31T15:43:42.623444+00:00",
   "last_notified_error": "ReadTimeout: HTTPSConnectionPool(host='api.telegram.org', port=443): Read timed out. (read timeout=30)",
   "auto_paused": false,
   "bot_enabled": true,
   "shutdown_once": false,
   "restart_requested": false,
-  "command_activity": 35,
+  "command_activity": 40,
   "idle_sleep_notified": false,
   "publication_stats": [
     {
@@ -25486,8 +25486,8 @@
       ]
     }
   ],
-  "last_published_id": "19208220",
-  "last_update_id": 506713673,
+  "last_published_id": "19203767",
+  "last_update_id": 506713680,
   "post_delay": 1,
   "publication_errors": [
     "2026-10-19T13:39:33.587023+00:00",
