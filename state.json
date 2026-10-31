@@ -2307,10 +2307,16 @@
     "19208220",
     "19209155",
     "19210464",
-    "19210860"
+    "19210860",
+    "19211950",
+    "19211974",
+    "19211978",
+    "19211985",
+    "19211994",
+    "19211998"
   ],
-  "last_post_id": 19210860,
-  "last_publication_at": "2026-10-31T20:43:29.152821+00:00",
+  "last_post_id": 19211998,
+  "last_publication_at": "2026-10-31T23:14:19.015558+00:00",
   "last_notified_error": "ReadTimeout: HTTPSConnectionPool(host='api.telegram.org', port=443): Read timed out. (read timeout=30)",
   "auto_paused": false,
   "bot_enabled": true,
@@ -25517,9 +25523,70 @@
       "agents": [
         "clove"
       ]
+    },
+    {
+      "id": "19211950",
+      "at": "2026-10-31T23:14:02.215771+00:00",
+      "source": "auto",
+      "type": "video",
+      "art": "original",
+      "agents": [
+        "clove",
+        "iso"
+      ]
+    },
+    {
+      "id": "19211974",
+      "at": "2026-10-31T23:14:04.775666+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "19211978",
+      "at": "2026-10-31T23:14:09.774100+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "19211985",
+      "at": "2026-10-31T23:14:11.902034+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "19211994",
+      "at": "2026-10-31T23:14:17.021318+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
+    },
+    {
+      "id": "19211998",
+      "at": "2026-10-31T23:14:19.015558+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "neon"
+      ]
     }
   ],
-  "last_published_id": "19210860",
+  "last_published_id": "19211998",
   "last_update_id": 506713680,
   "post_delay": 1,
   "publication_errors": [
