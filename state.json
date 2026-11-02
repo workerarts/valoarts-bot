@@ -25936,6 +25936,6 @@
     "18139483"
   ],
   "run_notifications": false,
-  "rule34_outage_active": false,
-  "rule34_outage_since": "2026-10-21T06:49:42.106089+00:00"
+  "rule34_outage_active": true,
+  "rule34_outage_since": "2026-11-02T18:33:24.130818+00:00"
 }
