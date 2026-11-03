@@ -26013,6 +26013,6 @@
     "18139483"
   ],
   "run_notifications": false,
-  "rule34_outage_active": true,
+  "rule34_outage_active": false,
   "rule34_outage_since": "2026-11-03T03:33:52.331772+00:00"
 }
