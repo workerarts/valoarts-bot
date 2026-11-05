@@ -2370,10 +2370,12 @@
     "19246535",
     "19246598",
     "19246988",
-    "19251178"
+    "19251178",
+    "19251416",
+    "19251671"
   ],
-  "last_post_id": 19251178,
-  "last_publication_at": "2026-11-05T04:41:19.043520+00:00",
+  "last_post_id": 19251671,
+  "last_publication_at": "2026-11-05T05:41:08.563447+00:00",
   "last_notified_error": "ReadTimeout: HTTPSConnectionPool(host='api.telegram.org', port=443): Read timed out. (read timeout=30)",
   "auto_paused": false,
   "bot_enabled": true,
@@ -26213,9 +26215,29 @@
       "agents": [
         "viper"
       ]
+    },
+    {
+      "id": "19251416",
+      "at": "2026-11-05T05:41:03.676590+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
+    },
+    {
+      "id": "19251671",
+      "at": "2026-11-05T05:41:08.563447+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "clove"
+      ]
     }
   ],
-  "last_published_id": "19251178",
+  "last_published_id": "19251671",
   "last_update_id": 506713680,
   "post_delay": 1,
   "publication_errors": [
