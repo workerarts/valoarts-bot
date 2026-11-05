@@ -2372,10 +2372,15 @@
     "19246988",
     "19251178",
     "19251416",
-    "19251671"
+    "19251671",
+    "19253381",
+    "19253383",
+    "19253385",
+    "19253386",
+    "19253395"
   ],
-  "last_post_id": 19251671,
-  "last_publication_at": "2026-11-05T05:41:08.563447+00:00",
+  "last_post_id": 19253395,
+  "last_publication_at": "2026-11-05T10:53:07.821858+00:00",
   "last_notified_error": "ReadTimeout: HTTPSConnectionPool(host='api.telegram.org', port=443): Read timed out. (read timeout=30)",
   "auto_paused": false,
   "bot_enabled": true,
@@ -26235,9 +26240,59 @@
       "agents": [
         "clove"
       ]
+    },
+    {
+      "id": "19253381",
+      "at": "2026-11-05T10:52:50.883021+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
+    },
+    {
+      "id": "19253383",
+      "at": "2026-11-05T10:52:55.577296+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
+    },
+    {
+      "id": "19253385",
+      "at": "2026-11-05T10:52:57.222912+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
+    },
+    {
+      "id": "19253386",
+      "at": "2026-11-05T10:53:01.897405+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
+    },
+    {
+      "id": "19253395",
+      "at": "2026-11-05T10:53:07.821858+00:00",
+      "source": "auto",
+      "type": "video",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
     }
   ],
-  "last_published_id": "19251671",
+  "last_published_id": "19253395",
   "last_update_id": 506713680,
   "post_delay": 1,
   "publication_errors": [
