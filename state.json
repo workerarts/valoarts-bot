@@ -2401,10 +2401,11 @@
     "19286404",
     "19286711",
     "19288291",
-    "19289217"
+    "19289217",
+    "19292697"
   ],
-  "last_post_id": 19289217,
-  "last_publication_at": "2026-11-08T15:06:34.434949+00:00",
+  "last_post_id": 19292697,
+  "last_publication_at": "2026-11-08T21:44:15.225341+00:00",
   "last_notified_error": "ReadTimeout: HTTPSConnectionPool(host='api.telegram.org', port=443): Read timed out. (read timeout=30)",
   "auto_paused": false,
   "bot_enabled": true,
@@ -26557,9 +26558,19 @@
         "clove",
         "viper"
       ]
+    },
+    {
+      "id": "19292697",
+      "at": "2026-11-08T21:44:15.225341+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "viper"
+      ]
     }
   ],
-  "last_published_id": "19289217",
+  "last_published_id": "19292697",
   "last_update_id": 506713681,
   "post_delay": 1,
   "publication_errors": [
