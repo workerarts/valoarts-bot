@@ -2417,10 +2417,17 @@
     "19298239",
     "19298400",
     "19301749",
-    "19301826"
+    "19301826",
+    "19305114",
+    "19305142",
+    "19305186",
+    "19305226",
+    "19305251",
+    "19305272",
+    "19305303"
   ],
-  "last_post_id": 19301826,
-  "last_publication_at": "2026-11-09T17:40:56.457627+00:00",
+  "last_post_id": 19305303,
+  "last_publication_at": "2026-11-09T23:34:06.178157+00:00",
   "last_notified_error": "ReadTimeout: HTTPSConnectionPool(host='api.telegram.org', port=443): Read timed out. (read timeout=30)",
   "auto_paused": false,
   "bot_enabled": true,
@@ -26733,9 +26740,79 @@
       "agents": [
         "hush"
       ]
+    },
+    {
+      "id": "19305114",
+      "at": "2026-11-09T23:33:45.974621+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
+    },
+    {
+      "id": "19305142",
+      "at": "2026-11-09T23:33:50.962318+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
+    },
+    {
+      "id": "19305186",
+      "at": "2026-11-09T23:33:52.790063+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
+    },
+    {
+      "id": "19305226",
+      "at": "2026-11-09T23:33:57.878541+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
+    },
+    {
+      "id": "19305251",
+      "at": "2026-11-09T23:33:59.577210+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
+    },
+    {
+      "id": "19305272",
+      "at": "2026-11-09T23:34:04.378010+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
+    },
+    {
+      "id": "19305303",
+      "at": "2026-11-09T23:34:06.178157+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
     }
   ],
-  "last_published_id": "19301826",
+  "last_published_id": "19305303",
   "last_update_id": 506713681,
   "post_delay": 1,
   "publication_errors": [
