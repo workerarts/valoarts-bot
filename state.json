@@ -2447,10 +2447,11 @@
     "19333185",
     "19333667",
     "19335695",
-    "19335747"
+    "19335747",
+    "19337315"
   ],
-  "last_post_id": 19335747,
-  "last_publication_at": "2026-11-12T20:29:10.848579+00:00",
+  "last_post_id": 19337315,
+  "last_publication_at": "2026-11-12T22:13:37.316625+00:00",
   "last_notified_error": "ReadTimeout: HTTPSConnectionPool(host='api.telegram.org', port=443): Read timed out. (read timeout=30)",
   "auto_paused": false,
   "bot_enabled": true,
@@ -27063,9 +27064,19 @@
       "agents": [
         "neon"
       ]
+    },
+    {
+      "id": "19337315",
+      "at": "2026-11-12T22:13:37.316625+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
     }
   ],
-  "last_published_id": "19335747",
+  "last_published_id": "19337315",
   "last_update_id": 506713681,
   "post_delay": 1,
   "publication_errors": [
