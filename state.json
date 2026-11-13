@@ -2450,10 +2450,11 @@
     "19335747",
     "19337315",
     "19338616",
-    "19339146"
+    "19339146",
+    "19342016"
   ],
-  "last_post_id": 19339146,
-  "last_publication_at": "2026-11-13T01:40:02.936904+00:00",
+  "last_post_id": 19342016,
+  "last_publication_at": "2026-11-13T08:48:36.960643+00:00",
   "last_notified_error": "ReadTimeout: HTTPSConnectionPool(host='api.telegram.org', port=443): Read timed out. (read timeout=30)",
   "auto_paused": false,
   "bot_enabled": true,
@@ -27096,9 +27097,19 @@
       "agents": [
         "reyna"
       ]
+    },
+    {
+      "id": "19342016",
+      "at": "2026-11-13T08:48:36.960643+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "gekko"
+      ]
     }
   ],
-  "last_published_id": "19339146",
+  "last_published_id": "19342016",
   "last_update_id": 506713681,
   "post_delay": 1,
   "publication_errors": [
