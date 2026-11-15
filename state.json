@@ -2465,10 +2465,11 @@
     "19356862",
     "19356891",
     "19356934",
-    "19358099"
+    "19358099",
+    "19363611"
   ],
-  "last_post_id": 19358099,
-  "last_publication_at": "2026-11-14T21:03:39.034469+00:00",
+  "last_post_id": 19363611,
+  "last_publication_at": "2026-11-15T07:48:18.644234+00:00",
   "last_notified_error": "ReadTimeout: HTTPSConnectionPool(host='api.telegram.org', port=443): Read timed out. (read timeout=30)",
   "auto_paused": false,
   "bot_enabled": true,
@@ -27261,9 +27262,19 @@
       "agents": [
         "sage"
       ]
+    },
+    {
+      "id": "19363611",
+      "at": "2026-11-15T07:48:18.644234+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "fade"
+      ]
     }
   ],
-  "last_published_id": "19358099",
+  "last_published_id": "19363611",
   "last_update_id": 506713681,
   "post_delay": 1,
   "publication_errors": [
