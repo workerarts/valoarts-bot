@@ -2484,10 +2484,11 @@
     "19381140",
     "19381832",
     "19384465",
-    "19384666"
+    "19384666",
+    "19385375"
   ],
-  "last_post_id": 19384666,
-  "last_publication_at": "2026-11-17T08:00:43.767303+00:00",
+  "last_post_id": 19385375,
+  "last_publication_at": "2026-11-17T10:18:10.833586+00:00",
   "last_notified_error": "ReadTimeout: HTTPSConnectionPool(host='api.telegram.org', port=443): Read timed out. (read timeout=30)",
   "auto_paused": false,
   "bot_enabled": true,
@@ -27471,9 +27472,19 @@
       "agents": [
         "hush"
       ]
+    },
+    {
+      "id": "19385375",
+      "at": "2026-11-17T10:18:10.833586+00:00",
+      "source": "auto",
+      "type": "video",
+      "art": "original",
+      "agents": [
+        "sage"
+      ]
     }
   ],
-  "last_published_id": "19384666",
+  "last_published_id": "19385375",
   "last_update_id": 506713682,
   "post_delay": 1,
   "publication_errors": [
