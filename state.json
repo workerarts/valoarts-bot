@@ -2514,10 +2514,16 @@
     "19398746",
     "19399434",
     "19400865",
-    "19400904"
+    "19400904",
+    "19401502",
+    "19403260",
+    "19403566",
+    "19403756",
+    "19404053",
+    "19404056"
   ],
-  "last_post_id": 19400904,
-  "last_publication_at": "2026-11-19T04:21:55.815725+00:00",
+  "last_post_id": 19404056,
+  "last_publication_at": "2026-11-19T13:41:48.936675+00:00",
   "last_notified_error": "ReadTimeout: HTTPSConnectionPool(host='api.telegram.org', port=443): Read timed out. (read timeout=30)",
   "auto_paused": false,
   "bot_enabled": true,
@@ -27801,9 +27807,71 @@
       "agents": [
         "sage"
       ]
+    },
+    {
+      "id": "19401502",
+      "at": "2026-11-19T13:41:31.319234+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "clove"
+      ]
+    },
+    {
+      "id": "19403260",
+      "at": "2026-11-19T13:41:36.102261+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "viper"
+      ]
+    },
+    {
+      "id": "19403566",
+      "at": "2026-11-19T13:41:37.720409+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "viper"
+      ]
+    },
+    {
+      "id": "19403756",
+      "at": "2026-11-19T13:41:42.492490+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
+    },
+    {
+      "id": "19404053",
+      "at": "2026-11-19T13:41:44.338309+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "fade",
+        "hush"
+      ]
+    },
+    {
+      "id": "19404056",
+      "at": "2026-11-19T13:41:48.936675+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "fade",
+        "hush"
+      ]
     }
   ],
-  "last_published_id": "19400904",
+  "last_published_id": "19404056",
   "last_update_id": 506713682,
   "post_delay": 1,
   "publication_errors": [
