@@ -2542,10 +2542,20 @@
     "19417639",
     "19417690",
     "19418344",
-    "19419620"
+    "19419620",
+    "19419811",
+    "19419867",
+    "19420258",
+    "19420424",
+    "19420438",
+    "19420462",
+    "19420485",
+    "19420964",
+    "19422212",
+    "19422262"
   ],
-  "last_post_id": 19419620,
-  "last_publication_at": "2026-11-21T07:42:52.509737+00:00",
+  "last_post_id": 19422262,
+  "last_publication_at": "2026-11-21T15:38:45.981570+00:00",
   "last_notified_error": "ReadTimeout: HTTPSConnectionPool(host='api.telegram.org', port=443): Read timed out. (read timeout=30)",
   "auto_paused": false,
   "bot_enabled": true,
@@ -28112,9 +28122,109 @@
       "agents": [
         "reyna"
       ]
+    },
+    {
+      "id": "19419811",
+      "at": "2026-11-21T15:38:13.514114+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "hush"
+      ]
+    },
+    {
+      "id": "19419867",
+      "at": "2026-11-21T15:38:18.455812+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "viper"
+      ]
+    },
+    {
+      "id": "19420258",
+      "at": "2026-11-21T15:38:20.226735+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "viper"
+      ]
+    },
+    {
+      "id": "19420424",
+      "at": "2026-11-21T15:38:25.156297+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
+    },
+    {
+      "id": "19420438",
+      "at": "2026-11-21T15:38:26.942210+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "reyna"
+      ]
+    },
+    {
+      "id": "19420462",
+      "at": "2026-11-21T15:38:31.955918+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "reyna"
+      ]
+    },
+    {
+      "id": "19420485",
+      "at": "2026-11-21T15:38:33.927677+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "original",
+      "agents": [
+        "reyna"
+      ]
+    },
+    {
+      "id": "19420964",
+      "at": "2026-11-21T15:38:38.892590+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "19422212",
+      "at": "2026-11-21T15:38:40.834486+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "jett"
+      ]
+    },
+    {
+      "id": "19422262",
+      "at": "2026-11-21T15:38:45.981570+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
     }
   ],
-  "last_published_id": "19419620",
+  "last_published_id": "19422262",
   "last_update_id": 506713682,
   "post_delay": 1,
   "publication_errors": [
