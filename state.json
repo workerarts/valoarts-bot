@@ -2560,10 +2560,23 @@
     "19426087",
     "19428095",
     "19428154",
-    "19428782"
+    "19428782",
+    "19428995",
+    "19429469",
+    "19430020",
+    "19430023",
+    "19430025",
+    "19430031",
+    "19430037",
+    "19430039",
+    "19430048",
+    "19430063",
+    "19430104",
+    "19430361",
+    "19430542"
   ],
-  "last_post_id": 19428782,
-  "last_publication_at": "2026-11-22T08:28:34.839035+00:00",
+  "last_post_id": 19430542,
+  "last_publication_at": "2026-11-22T16:34:52.925557+00:00",
   "last_notified_error": "ReadTimeout: HTTPSConnectionPool(host='api.telegram.org', port=443): Read timed out. (read timeout=30)",
   "auto_paused": false,
   "bot_enabled": true,
@@ -28310,9 +28323,139 @@
       "agents": [
         "clove"
       ]
+    },
+    {
+      "id": "19428995",
+      "at": "2026-11-22T16:34:05.194353+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "sage"
+      ]
+    },
+    {
+      "id": "19429469",
+      "at": "2026-11-22T16:34:16.330665+00:00",
+      "source": "auto",
+      "type": "video",
+      "art": "original",
+      "agents": [
+        "jett"
+      ]
+    },
+    {
+      "id": "19430020",
+      "at": "2026-11-22T16:34:18.239243+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "deadlock"
+      ]
+    },
+    {
+      "id": "19430023",
+      "at": "2026-11-22T16:34:23.177084+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "deadlock"
+      ]
+    },
+    {
+      "id": "19430025",
+      "at": "2026-11-22T16:34:25.384643+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "deadlock"
+      ]
+    },
+    {
+      "id": "19430031",
+      "at": "2026-11-22T16:34:30.354956+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "deadlock"
+      ]
+    },
+    {
+      "id": "19430037",
+      "at": "2026-11-22T16:34:32.431237+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "deadlock"
+      ]
+    },
+    {
+      "id": "19430039",
+      "at": "2026-11-22T16:34:37.351723+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "deadlock"
+      ]
+    },
+    {
+      "id": "19430048",
+      "at": "2026-11-22T16:34:39.175976+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "deadlock"
+      ]
+    },
+    {
+      "id": "19430063",
+      "at": "2026-11-22T16:34:44.108587+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "deadlock"
+      ]
+    },
+    {
+      "id": "19430104",
+      "at": "2026-11-22T16:34:46.068917+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "viper"
+      ]
+    },
+    {
+      "id": "19430361",
+      "at": "2026-11-22T16:34:51.005538+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "viper"
+      ]
+    },
+    {
+      "id": "19430542",
+      "at": "2026-11-22T16:34:52.925557+00:00",
+      "source": "auto",
+      "type": "image",
+      "art": "ai_generated",
+      "agents": [
+        "hush"
+      ]
     }
   ],
-  "last_published_id": "19428782",
+  "last_published_id": "19430542",
   "last_update_id": 506713682,
   "post_delay": 1,
   "publication_errors": [
